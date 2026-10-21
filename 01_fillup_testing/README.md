@@ -3,7 +3,7 @@
 Checks that RASP-Fog follows Algorithms 1 and 2 step by step.
 
 ```
-python3 fillup_testing/fillup_test.py
+python3 01_fillup_testing/fillup_test.py
 ```
 
 ## Setup

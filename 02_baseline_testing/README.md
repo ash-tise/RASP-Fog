@@ -3,7 +3,7 @@
 Runs all five policies on the fill-up scenario (48 requests, no resource release, same threat schedule).
 
 ```
-python3 baseline_testing/baseline_test.py
+python3 02_baseline_testing/baseline_test.py
 ```
 
 ## Metrics

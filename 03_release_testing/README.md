@@ -3,7 +3,7 @@
 Adds request completion: each request has a fixed duration and releases its resources when it ends, so load rises and falls.
 
 ```
-python3 release_testing/release_test.py
+python3 03_release_testing/release_test.py
 ```
 
 ## Setup

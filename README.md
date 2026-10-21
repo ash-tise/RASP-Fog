@@ -8,25 +8,25 @@ Requirements: Python 3. No external packages.
 
 ```
 rasp_core.py                          system model, Algorithms 1 and 2, policies
-fillup_testing/fillup_test.py         functional test of RASP-Fog (no resource release)
-baseline_testing/baseline_test.py     RASP-Fog vs baselines on the fill-up scenario
-release_testing/release_test.py       fixed request durations, resources released on completion
-random_testing/random_test.py         random traffic at five load levels, five seeds
-efficiency_testing/efficiency_test.py security resource use, with 95% confidence intervals
+01_fillup_testing/fillup_test.py         functional test of RASP-Fog (no resource release)
+02_baseline_testing/baseline_test.py     RASP-Fog vs baselines on the fill-up scenario
+03_release_testing/release_test.py       fixed request durations, resources released on completion
+04_random_testing/random_test.py         random traffic at five load levels, five seeds
+05_efficiency_testing/efficiency_test.py security resource use, with 95% confidence intervals
 ```
 
-Each test folder has its own README describing its setup, output and results. All tests import `rasp_core.py` and may override its module-level settings before running (for example `core.STEPS = 120`). `efficiency_test.py` also reuses the traffic generator in `random_testing/random_test.py`.
+Each test folder has its own README describing its setup, output and results. All tests import `rasp_core.py` and may override its module-level settings before running (for example `core.STEPS = 120`). `efficiency_test.py` also reuses the traffic generator in `04_random_testing/random_test.py`.
 
 ## Usage
 
 Run any test from the repository root:
 
 ```
-python3 fillup_testing/fillup_test.py
-python3 baseline_testing/baseline_test.py
-python3 release_testing/release_test.py
-python3 random_testing/random_test.py
-python3 efficiency_testing/efficiency_test.py
+python3 01_fillup_testing/fillup_test.py
+python3 02_baseline_testing/baseline_test.py
+python3 03_release_testing/release_test.py
+python3 04_random_testing/random_test.py
+python3 05_efficiency_testing/efficiency_test.py
 ```
 
 Each test runs in a few seconds.

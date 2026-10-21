@@ -4,7 +4,7 @@ with 95% confidence intervals.
 
 Run it with:   python3 efficiency_test.py
 
-Uses the same random traffic as ../random_testing/random_test.py (same rates,
+Uses the same random traffic as ../04_random_testing/random_test.py (same rates,
 seeds, durations, threat process and 5 ms setup delay). Every second it also
 records how much CPU, memory and bandwidth active requests spend on their
 security profile, on top of their base demand.
@@ -15,7 +15,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, ".."))
-sys.path.insert(0, os.path.join(HERE, "..", "random_testing"))
+sys.path.insert(0, os.path.join(HERE, "..", "04_random_testing"))
 import rasp_core as core
 import random_test as rt
 

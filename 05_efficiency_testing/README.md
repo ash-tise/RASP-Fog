@@ -3,12 +3,12 @@
 Measures the resources each policy spends on security profiles, with 95 % confidence intervals.
 
 ```
-python3 efficiency_testing/efficiency_test.py
+python3 05_efficiency_testing/efficiency_test.py
 ```
 
 ## Setup
 
-Same traffic, seeds, threat process and setup delay as `random_testing/random_test.py`, which it imports. Every second the test records the CPU, memory and bandwidth that active requests use for their security profile on top of their base demand. Intervals use the t-distribution over 5 seeds. RASP-Fog and Static-Strong are also compared seed by seed, since each seed gives both identical traffic.
+Same traffic, seeds, threat process and setup delay as `04_random_testing/random_test.py`, which it imports. Every second the test records the CPU, memory and bandwidth that active requests use for their security profile on top of their base demand. Intervals use the t-distribution over 5 seeds. RASP-Fog and Static-Strong are also compared seed by seed, since each seed gives both identical traffic.
 
 ## Output
 

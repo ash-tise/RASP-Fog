@@ -3,7 +3,7 @@
 Random traffic at five load levels, averaged over five seeds.
 
 ```
-python3 random_testing/random_test.py
+python3 04_random_testing/random_test.py
 ```
 
 ## Setup
