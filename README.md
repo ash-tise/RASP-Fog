@@ -2,7 +2,7 @@
 
 A discrete-time simulation of RASP-Fog, a risk- and SLA-aware scheme that jointly selects the processing node and security profile for each IoT request in a fog–cloud network.
 
-Requirements: Python 3. No external packages.
+Requirements: Python 3
 
 ## Repository layout
 
