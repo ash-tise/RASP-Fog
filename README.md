@@ -2,7 +2,7 @@
 
 A discrete-time simulation of RASP-Fog, a risk- and SLA-aware scheme that jointly selects the processing node and security profile for each IoT request in a fog–cloud network.
 
-Requirements: Python 3
+Requirements: Python 3. `matplotlib` is needed only to save figures.
 
 ## Repository layout
 
@@ -13,9 +13,11 @@ rasp_core.py                          system model, Algorithms 1 and 2, policies
 03_release_testing/release_test.py       fixed request durations, resources released on completion
 04_random_testing/random_test.py         random traffic at five load levels, five seeds
 05_efficiency_testing/efficiency_test.py security resource use, with 95% confidence intervals
+06_arrival_rate_testing/arrival_rate_test.py secure completion at 20-400 req/s, fixed threat
+07_security_cpu_testing/security_cpu_test.py security CPU utilization of the fog at 20-400 req/s
 ```
 
-Each test folder has its own README describing its setup, output and results. All tests import `rasp_core.py` and may override its module-level settings before running (for example `core.STEPS = 120`). `efficiency_test.py` also reuses the traffic generator in `04_random_testing/random_test.py`.
+Each test folder has its own README describing its setup, output and results. All tests import `rasp_core.py` and may override its module-level settings before running (for example `core.STEPS = 120`). `efficiency_test.py` also reuses the traffic generator in `04_random_testing/random_test.py`, and `security_cpu_test.py` reuses the settings and traffic generator in `06_arrival_rate_testing/arrival_rate_test.py`.
 
 ## Usage
 
@@ -27,9 +29,11 @@ python3 02_baseline_testing/baseline_test.py
 python3 03_release_testing/release_test.py
 python3 04_random_testing/random_test.py
 python3 05_efficiency_testing/efficiency_test.py
+python3 06_arrival_rate_testing/arrival_rate_test.py
+python3 07_security_cpu_testing/security_cpu_test.py
 ```
 
-Each test runs in a few seconds.
+Tests 01-05 run in a few seconds; tests 06 and 07 take about 30 seconds each.
 
 ## Model
 
@@ -69,6 +73,8 @@ The orchestrator is logically centralized with a global view of node resources a
 | Release | At moderate load Static-Strong matches RASP-Fog (120 vs 119 secure), since strong security is cheap here. |
 | Random | RASP-Fog has the highest secure share from 1.5 req/s, 1–2 points above Static-Strong. |
 | Efficiency | RASP-Fog spends about 30 % less CPU, memory and bandwidth on security than Static-Strong at every load (significant); the secure-share gap is not significant. |
+| Arrival rate | At a fixed threat, the fog saturates from about 150 req/s; RASP-Fog completes about 3 points more requests securely than Static-Strong at 300-400 req/s (significant). |
+| Security CPU | RASP-Fog uses about 44 % less fog CPU for security than Static-Strong below saturation, and 10.5 % vs 16.4 % of fog CPU at saturation. |
 
 ## Limitations
 
