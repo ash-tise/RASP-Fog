@@ -6,24 +6,44 @@ Requirements: Python 3. `matplotlib` is needed only to save figures.
 
 ## Repository layout
 
-```
-rasp_core.py                          system model, Algorithms 1 and 2, policies
-01_fillup_testing/fillup_test.py         functional test of RASP-Fog (no resource release)
-02_baseline_testing/baseline_test.py     RASP-Fog vs baselines on the fill-up scenario
-03_release_testing/release_test.py       fixed request durations, resources released on completion
-04_random_testing/random_test.py         random traffic at five load levels, five seeds
-05_efficiency_testing/efficiency_test.py security resource use, with 95% confidence intervals
-06_arrival_rate_testing/arrival_rate_test.py secure completion at 20-400 req/s, fixed threat
-07_security_cpu_testing/security_cpu_test.py security CPU utilization of the fog at 20-400 req/s
-08_hysteresis_testing/hysteresis_test.py profile changes vs hysteresis interval tau_H
-rasp_nsfnet.py                        RASP-Fog on the 14-node, 21-link NSFNET topology with an elastic cloud
-09_nsfnet_testing/nsfnet_test.py      topology, routing and capacity checks on NSFNET
-10_nsfnet_load_testing/nsfnet_load_test.py  NSFNET at 8-40 req/s around saturation, dynamic regional threat
-11_attack_intensity_testing/attack_intensity_test.py  re-orchestration vs attack intensity, RASP-Fog vs No-Relocation
-12_protection_testing/protection_test.py  NSFNET results with deadline protection on and off
-```
+Two simulation models sit at the repository root, and each numbered folder holds one test script with its own README describing the setup, output and results.
 
-Each test folder has its own README describing its setup, output and results. All tests import `rasp_core.py` and may override its module-level settings before running (for example `core.STEPS = 120`). `efficiency_test.py` also reuses the traffic generator in `04_random_testing/random_test.py`, `security_cpu_test.py` reuses the settings and traffic generator in `06_arrival_rate_testing/arrival_rate_test.py`, and `hysteresis_test.py` reuses the traffic and threat generator in `04_random_testing/random_test.py`.
+### Models
+
+| File | Description |
+|---|---|
+| `rasp_core.py` | Three fog nodes and a cloud: system model, Algorithms 1 and 2, policies |
+| `rasp_nsfnet.py` | The same algorithms on the 14-node, 21-link NSFNET with an elastic cloud |
+
+### Tests on `rasp_core.py`
+
+| Folder | Script | Purpose |
+|---|---|---|
+| `01_fillup_testing` | `fillup_test.py` | Functional test of RASP-Fog, no resource release |
+| `02_baseline_testing` | `baseline_test.py` | RASP-Fog vs the baselines on the fill-up scenario |
+| `03_release_testing` | `release_test.py` | Fixed request durations, resources released on completion |
+| `04_random_testing` | `random_test.py` | Random traffic at five load levels, five seeds |
+| `05_efficiency_testing` | `efficiency_test.py` | Security resource use with 95% confidence intervals |
+| `06_arrival_rate_testing` | `arrival_rate_test.py` | Secure completion at 20–400 req/s, fixed threat |
+| `07_security_cpu_testing` | `security_cpu_test.py` | Fog security CPU at 20–400 req/s |
+| `08_hysteresis_testing` | `hysteresis_test.py` | Profile changes vs the hysteresis interval τ_H |
+
+### Tests on `rasp_nsfnet.py`
+
+| Folder | Script | Purpose |
+|---|---|---|
+| `09_nsfnet_testing` | `nsfnet_test.py` | Topology, routing and capacity checks |
+| `10_nsfnet_load_testing` | `nsfnet_load_test.py` | 8–40 req/s around saturation, dynamic regional threat |
+| `11_attack_intensity_testing` | `attack_intensity_test.py` | Re-orchestration vs attack intensity, RASP-Fog vs No-Relocation |
+| `12_protection_testing` | `protection_test.py` | Results with deadline protection on and off |
+
+### Shared code
+
+Tests may override a model's module-level settings before running (for example `core.STEPS = 120`). Some tests reuse code from an earlier one:
+
+- `efficiency_test.py` and `hysteresis_test.py` use the traffic and threat generator in `04_random_testing/random_test.py`.
+- `security_cpu_test.py` uses the settings and traffic generator in `06_arrival_rate_testing/arrival_rate_test.py`.
+- `attack_intensity_test.py` and `protection_test.py` use the run and plotting helpers in `10_nsfnet_load_testing/nsfnet_load_test.py`.
 
 ## Usage
 
@@ -44,7 +64,7 @@ python3 11_attack_intensity_testing/attack_intensity_test.py
 python3 12_protection_testing/protection_test.py
 ```
 
-Tests 01-05 and 09 run in a few seconds; tests 06-08 take up to 30 seconds each; tests 10-12 run their simulations in parallel and take 1-2 minutes each on 4 cores. Tests 11 and 12 reuse the helpers in `10_nsfnet_load_testing/nsfnet_load_test.py`.
+Tests 01-05 and 09 run in a few seconds; tests 06-08 take up to 30 seconds each; tests 10-12 run their simulations in parallel and take 1-2 minutes each on 4 cores.
 
 ## Model
 
