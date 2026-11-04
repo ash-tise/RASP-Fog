@@ -16,6 +16,11 @@ rasp_core.py                          system model, Algorithms 1 and 2, policies
 06_arrival_rate_testing/arrival_rate_test.py secure completion at 20-400 req/s, fixed threat
 07_security_cpu_testing/security_cpu_test.py security CPU utilization of the fog at 20-400 req/s
 08_hysteresis_testing/hysteresis_test.py profile changes vs hysteresis interval tau_H
+rasp_nsfnet.py                        RASP-Fog on the 14-node, 21-link NSFNET topology with an elastic cloud
+09_nsfnet_testing/nsfnet_test.py      topology, routing and capacity checks on NSFNET
+10_nsfnet_load_testing/nsfnet_load_test.py  NSFNET at 8-40 req/s around saturation, dynamic regional threat
+11_attack_intensity_testing/attack_intensity_test.py  re-orchestration vs attack intensity, RASP-Fog vs No-Relocation
+12_protection_testing/protection_test.py  NSFNET results with deadline protection on and off
 ```
 
 Each test folder has its own README describing its setup, output and results. All tests import `rasp_core.py` and may override its module-level settings before running (for example `core.STEPS = 120`). `efficiency_test.py` also reuses the traffic generator in `04_random_testing/random_test.py`, `security_cpu_test.py` reuses the settings and traffic generator in `06_arrival_rate_testing/arrival_rate_test.py`, and `hysteresis_test.py` reuses the traffic and threat generator in `04_random_testing/random_test.py`.
@@ -33,9 +38,13 @@ python3 05_efficiency_testing/efficiency_test.py
 python3 06_arrival_rate_testing/arrival_rate_test.py
 python3 07_security_cpu_testing/security_cpu_test.py
 python3 08_hysteresis_testing/hysteresis_test.py
+python3 09_nsfnet_testing/nsfnet_test.py
+python3 10_nsfnet_load_testing/nsfnet_load_test.py
+python3 11_attack_intensity_testing/attack_intensity_test.py
+python3 12_protection_testing/protection_test.py
 ```
 
-Tests 01-05 run in a few seconds; tests 06-08 take up to 30 seconds each.
+Tests 01-05 and 09 run in a few seconds; tests 06-08 take up to 30 seconds each; tests 10-12 run their simulations in parallel and take 1-2 minutes each on 4 cores. Tests 11 and 12 reuse the helpers in `10_nsfnet_load_testing/nsfnet_load_test.py`.
 
 ## Model
 
@@ -56,13 +65,15 @@ Tests 01-05 run in a few seconds; tests 06-08 take up to 30 seconds each.
 
 The orchestrator is logically centralized with a global view of node resources and threat state.
 
+**NSFNET model (`rasp_nsfnet.py`, tests 09-12).** The same algorithms on the 14-node, 21-link NSFNET with random ingress nodes, shortest-path routing, per-link bandwidth reservation and an elastic cloud behind two gateways. Queueing grows as χ = 2 ms × u / (1 − u) with CPU utilization u, requests come from four heterogeneous classes with sessions of 10-40 s, each of three regions has its own dynamic threat level, and a placement is only feasible if every request already on the node still meets its deadline. See `09_nsfnet_testing/README.md`.
+
 ## Policies
 
 | Policy | Type | Description |
 |---|---|---|
 | RASP-Fog | Proposed | Joint node–profile selection, relocation, hysteresis |
 | No-Hysteresis | Ablation | RASP-Fog with τ_H = 0 |
-| No-Relocation | Ablation | RASP-Fog without relocation; a request whose upgrade does not fit stays on its current profile |
+| No-Relocation | Ablation | RASP-Fog without relocation; a request whose upgrade does not fit stays on its current profile (`rasp_core.py`) or is terminated (`rasp_nsfnet.py`) |
 | Static-Strong | Baseline | Always q3, no runtime adaptation |
 | Static-Light | Baseline | Always q1, no runtime adaptation |
 
@@ -78,8 +89,26 @@ The orchestrator is logically centralized with a global view of node resources a
 | Arrival rate | At a fixed threat, the fog saturates from about 150 req/s; RASP-Fog completes about 3 points more requests securely than Static-Strong at 300-400 req/s (significant). |
 | Security CPU | RASP-Fog uses about 44 % less fog CPU for security than Static-Strong below saturation, and 10.5 % vs 16.4 % of fog CPU at saturation. |
 | Hysteresis | Raising τ_H from 0 to 8 s cuts profile changes by 31 % (61 % at 32 s) at the cost of 6 % (13 %) more security CPU; τ_H below the threat update interval has little effect. |
+| NSFNET load | Saturation starts near 20 req/s; RASP-Fog completes 0.9-2.2 points more sessions securely than Static-Strong from 20 to 40 req/s (significant) with 30 % less security CPU, and drops about 60 % fewer sessions than No-Relocation. |
+| Attack intensity | About 5 % of mandatory upgrades do not fit in place; RASP-Fog relocates 70-78 % of them, so No-Relocation drops 2.6-3.6 times as many sessions. |
+| Deadline protection | Without it, 11-19 % of sessions are pushed past their deadline near saturation, relocation rarely succeeds, and RASP-Fog's advantage disappears. |
+
+## Key findings thus far
+
+Significance is judged with paired 95% t-intervals over five seeds (tests 05-08 and 10-12): a difference is significant when its interval excludes zero.
+
+1. **Same protection for less security cost.** RASP-Fog never leaves a request under-protected and spends about 30 % less on security than Static-Strong: CPU, memory and bandwidth in the three-node model (test 05) and 30-33 % of fog security CPU on NSFNET (test 10). Significant at every load in both models; this is the most robust result.
+2. **Small, consistent completion gain near saturation.** RASP-Fog completes 0.9-2.2 points more sessions securely and on time than Static-Strong on NSFNET from 20 to 40 req/s (test 10), and about 3 points more at 300-400 req/s in the three-node model (test 06). Significant from saturation on; below saturation both complete nearly every session.
+3. **Relocation keeps sessions alive during an attack.** About 5 % of mandatory upgrades do not fit on the current node. RASP-Fog relocates 70-78 % of them, so it drops 55-70 % fewer sessions than No-Relocation (tests 10 and 11, significant at every attack intensity). Its effect on overall secure completion is under 1 point and significant only at some loads.
+4. **Hysteresis trades a little CPU for stability.** A holding interval of 8 s cuts profile changes by 31 ± 11 % at a cost of 6 % more security CPU; 32 s cuts them by 61 ± 5 % for 13 % more (test 08).
+5. **Deadline protection matters more than any policy difference.** Without it, 11-19 % of sessions are pushed past their deadline near saturation, secure completion falls by 9-22 points for every policy, relocation rarely succeeds, and Static-Strong completes 2.1-2.6 points more than RASP-Fog at 24-32 req/s (test 12). Findings 2 and 3 hold only with protection on.
+6. **Static-Light is cheap but insecure.** It completes only about 7 % of NSFNET sessions securely, since every health session and every session that sees a raised threat is under-protected.
+
+The size of findings 1 and 2 depends on the assumed profile overheads (5/10/20 % CPU and memory); heavier overheads would widen the gaps but have not been tested.
 
 ## Limitations
+
+The first two apply only to `rasp_core.py` (tests 01-08): the NSFNET model has 14 nodes, random ingress nodes and a threat level per region.
 
 - Three fog nodes and a single ingress point, so each node has one fixed network delay.
 - The threat level is the same for every request.
