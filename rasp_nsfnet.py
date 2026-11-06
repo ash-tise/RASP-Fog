@@ -168,6 +168,8 @@ class Network:
         self.link_used = {l: 0.0 for l in self.links}
         self.at = {n: {} for n in self.nodes}                       # node -> {id: req}
         self.room = {}              # node -> cached chi_room
+        self.fog_link_used = 0.0    # bandwidth reserved summed over fog links
+        self.wan_used = 0.0         # bandwidth reserved summed over WAN uplinks
         self.fog_cpu = 0.0          # CPU reserved on fog nodes
         self.fog_sec_cpu = 0.0      # the part of it spent on security overhead
 
@@ -180,6 +182,10 @@ class Network:
         u[2] += sign * db
         for l in self.routes[(req["ingress"], req["node"])][1]:
             self.link_used[l] += sign * db
+            if CLOUD in l:
+                self.wan_used += sign * db
+            else:
+                self.fog_link_used += sign * db
         self.room.pop(req["node"], None)
         if sign > 0:
             self.at[req["node"]][req["id"]] = req
@@ -418,6 +424,11 @@ def adapt(req, t, net, log, policy):
                         f"{'node' if policy['relocate'] else 'upgrade in place'}"))
             return
         best = choose(cands)
+        if event == "MOVE":                              # record the relocation's cost
+            old, new = net.routes[(req["ingress"], cur_node)], net.routes[(req["ingress"], best["node"])]
+            req.setdefault("relocations", []).append(
+                {"t": t, "from": cur_node, "to": best["node"], "added_nu": new[0] - old[0],
+                 "added_hops": len(new[1]) - len(old[1])})
         net.reserve(req, -1)
         req.update(node=best["node"], k=best["k"], delay=best["d"])
         net.reserve(req, +1)
@@ -473,13 +484,16 @@ def simulate(policy_name, arrivals, duration, warmup=0.0, epoch=1.0, check=False
     net, log = Network(), []
     reqs = sorted((dict(a) for a in arrivals), key=lambda r: r["t"])
     departures, problems = [], []
-    acc = {"cpu": 0.0, "sec": 0.0, "last": warmup, "late": 0, "peak_link": 0.0, "peak_wan": 0.0}
+    acc = {"cpu": 0.0, "sec": 0.0, "link": 0.0, "wan": 0.0, "last": warmup, "late": 0,
+           "peak_link": 0.0, "peak_wan": 0.0}
 
     def advance(now):                       # integrate fog CPU over [warmup, duration)
         a, b = acc["last"], min(now, duration)
         if b > a:
             acc["cpu"] += net.fog_cpu * (b - a)
             acc["sec"] += net.fog_sec_cpu * (b - a)
+            acc["link"] += net.fog_link_used * (b - a)
+            acc["wan"] += net.wan_used * (b - a)
             acc["last"] = b
 
     def sla_check(node):
@@ -540,6 +554,10 @@ def simulate(policy_name, arrivals, duration, warmup=0.0, epoch=1.0, check=False
     n, span = max(1, len(measured)), max(1e-9, duration - warmup)
     fog_cap = sum(net.nodes[j]["cpu"] for j in FOG)
     moves = count(events, "MOVE")
+    relocs = [x for r in measured for x in r.get("relocations", [])]
+    fog_link_cap = sum(l["bw"] for k, l in net.links.items() if CLOUD not in k)
+    wan_cap = WAN_BW * len(CLOUD_GATEWAYS)
+    violated = [r for r in admitted if r.get("sla_miss") or r["id"] in terminated]
     return {
         "arrivals": len(measured),
         "admitted": len(admitted),
@@ -548,6 +566,7 @@ def simulate(policy_name, arrivals, duration, warmup=0.0, epoch=1.0, check=False
         "secure_pct": 100 * len(secure) / n,
         "sla_miss": sum(1 for r in admitted if r.get("sla_miss")),
         "sla_miss_pct": 100 * sum(1 for r in admitted if r.get("sla_miss")) / n,
+        "sla_violation_pct": 100 * len(violated) / n,       # admitted, then dropped or late
         "under": sum(1 for r in admitted if r.get("under")),
         "terminated": len(terminated),
         "upgrades": count(events, "UPGRADE"),
@@ -555,6 +574,8 @@ def simulate(policy_name, arrivals, duration, warmup=0.0, epoch=1.0, check=False
         "downgrades": count(events, "DOWNGRADE"),
         "changes": sum(1 for x in events if x[1] in DECISIONS),
         "relocation_ms": moves * PSI_MOVE,
+        "reloc_added_nu": sum(x["added_nu"] for x in relocs) / max(1, len(relocs)),
+        "reloc_added_hops": sum(x["added_hops"] for x in relocs) / max(1, len(relocs)),
         "cloud": sum(1 for r in admitted if r["node"] == CLOUD),
         "health_cloud": sum(1 for r in admitted if r["node"] == CLOUD and r["kind"] == "health"),
         "away": sum(1 for r in admitted if r["node"] != r["ingress"]),
@@ -563,6 +584,8 @@ def simulate(policy_name, arrivals, duration, warmup=0.0, epoch=1.0, check=False
         "sec_cpu_pct": 100 * acc["sec"] / (fog_cap * span),
         "peak_link_pct": 100 * acc["peak_link"],
         "peak_wan_pct": 100 * acc["peak_wan"],
+        "link_util_pct": 100 * acc["link"] / (fog_link_cap * span),
+        "wan_util_pct": 100 * acc["wan"] / (wan_cap * span),
         "late": acc["late"],
         "problems": problems,
         "log": log,

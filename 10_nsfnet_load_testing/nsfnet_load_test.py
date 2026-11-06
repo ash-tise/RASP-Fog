@@ -34,9 +34,10 @@ DURATION = 150            # seconds of arrivals; sessions then run to completion
 WARMUP = 30               # sessions arriving before this are not counted
 T95 = 2.776               # t value for a 95% CI with 5 seeds
 
-KEYS = ["secure_pct", "rejected_pct", "dropped_pct", "sla_miss_pct", "upgrades",
-        "moves", "terminated", "failed_in_place", "moves_per_1000", "sec_cpu_pct",
-        "fog_util_pct", "cloud_pct", "peak_wan_pct"]
+KEYS = ["secure_pct", "rejected_pct", "dropped_pct", "sla_miss_pct", "sla_violation_pct",
+        "upgrades", "moves", "terminated", "failed_in_place", "moves_per_1000",
+        "reloc_added_ms", "reloc_added_hops", "sec_cpu_pct", "fog_util_pct",
+        "link_util_pct", "wan_util_pct", "cloud_pct", "peak_wan_pct"]
 
 
 # ---------------------------------------------------------------- one run
@@ -55,13 +56,19 @@ def run_one(task):
         "rejected_pct": 100 * m["rejected"] / n,
         "dropped_pct": 100 * m["terminated"] / n,
         "sla_miss_pct": m["sla_miss_pct"],
+        "sla_violation_pct": m["sla_violation_pct"],
         "upgrades": m["upgrades"],
         "moves": m["moves"],
         "terminated": m["terminated"],
         "failed_in_place": m["moves"] + m["terminated"],
         "moves_per_1000": 1000 * m["moves"] / n,
+        # delay a relocated session takes on: migration delay psi plus the longer path
+        "reloc_added_ms": nf.PSI_MOVE + m["reloc_added_nu"] if m["moves"] else 0.0,
+        "reloc_added_hops": m["reloc_added_hops"],
         "sec_cpu_pct": m["sec_cpu_pct"],
         "fog_util_pct": m["fog_util_pct"],
+        "link_util_pct": m["link_util_pct"],
+        "wan_util_pct": m["wan_util_pct"],
         "cloud_pct": 100 * m["cloud"] / n,
         "peak_wan_pct": m["peak_wan_pct"],
     }

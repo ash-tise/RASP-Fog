@@ -41,4 +41,4 @@ All values in %. Static-Light completes about 7% of sessions securely at every r
 
 ## Output
 
-`load_results.csv` (mean and 95% CI of every metric per policy and rate), `fig_nsfnet_secure_completion.png`, `fig_nsfnet_security_cpu.png`.
+`load_results.csv` (mean and 95% CI of every metric per policy and rate, including SLA violations, relocation overhead and fog-link and WAN utilization), `fig_nsfnet_secure_completion.png`, `fig_nsfnet_security_cpu.png`.

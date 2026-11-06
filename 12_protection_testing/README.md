@@ -10,7 +10,7 @@ Runs the 240 simulations in parallel, about 1.5 min on 4 cores. Uses the helpers
 
 ## Setup
 
-The load sweep of `10_nsfnet_load_testing` (rates 12–40 req/s, threat p_up = 0.2, seeds 1–5) with `PROTECT` on and off. With protection off, Algorithms 1 and 2 check only the deadline of the request being placed, so later placements can raise a node's queueing delay past the deadlines of requests already running there. Those requests count as runtime SLA misses.
+The load sweep of `10_nsfnet_load_testing` (rates 12–40 req/s, threat p_up = 0.2, seeds 1–5) with `PROTECT` on and off. With protection off, Algorithms 1 and 2 check only the deadline of the request being placed, so later placements can raise a node's queueing delay past the deadlines of requests already running there. Those requests count as runtime SLA misses. An SLA violation is an admitted session that is dropped or pushed past its deadline, so with protection on it is only the dropped sessions, and with protection off it also includes the runtime misses.
 
 ## Results
 
