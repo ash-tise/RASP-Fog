@@ -9,9 +9,11 @@ Same algorithm as rasp_core.py (Algorithms 1 and 2), on a richer model:
     its path, so routes compete,
   * an elastic cloud behind two gateway nodes: unlimited CPU and memory, no
     queueing, reached over a 100 ms WAN uplink with limited bandwidth,
-  * contention: the queueing delay chi grows as u / (1 - u) with the node's CPU
-    utilization u, so delay rises steeply near saturation; a placement is only
-    feasible if every request already on that node still meets its deadline,
+  * contention: the queueing delay chi = CHI_MS * u / (1 - u), where u is the
+    node's projected post-assignment CPU utilization (reservations already there,
+    minus the request's own old one if it is being re-evaluated, plus the
+    candidate's c(1 + dc_k)); a placement is only feasible if every request
+    already on that node still meets its deadline under that same chi,
   * heterogeneous requests: four classes with randomly varied demands, deadlines
     and session lengths,
   * a dynamic threat level per network region, so q_req changes during a
@@ -22,6 +24,7 @@ Usage:
     nf.THREAT = nf.random_threat(random.Random(1), steps=200, p_up=0.2)  # or uniform_threat
     arrivals = nf.make_arrivals(random.Random(1), rate=20, duration=150)
     m = nf.simulate("RASP-Fog", arrivals, duration=150, warmup=30)
+    # policies: RASP-Fog, RASP-Reloc, RASP-Profile, SA-FF, Static-Strong (see POLICIES)
     print(m["secure_pct"], m["moves"], m["terminated"], m["sec_cpu_pct"])
 
 Needs only plain Python 3.
@@ -86,13 +89,23 @@ REGIONS = {"West": [1, 2, 3, 4], "Central": [5, 6, 7, 8, 10], "East": [9, 11, 12
 REGION_OF = {j: r for r, nodes in REGIONS.items() for j in nodes}
 THREAT = {r: [(0, 1)] for r in REGIONS}     # region -> [(start second, level)]
 
-# Policies. No-Relocation upgrades in place or terminates; it never moves a request.
+# Policies, all on one code path and set by four switches:
+#   profile   "adaptive" (q >= q_req, re-evaluated every epoch) or a fixed level k
+#   relocate  whether a mandatory upgrade that does not fit locally may move the request
+#   tau_h     hysteresis holding interval (None = TAU_H)
+#   placement "objective" (min J over every feasible node) or "first_fit" (first node,
+#             in FIRST_FIT_ORDER, with any feasible profile; min J among that node's
+#             profiles). Placement applies at admission and at relocation.
 POLICIES = {
-    "RASP-Fog":      {"profile": "adaptive", "relocate": True,  "tau_h": None},
-    "No-Hysteresis": {"profile": "adaptive", "relocate": True,  "tau_h": 0},
-    "No-Relocation": {"profile": "adaptive", "relocate": False, "tau_h": None},
-    "Static-Strong": {"profile": 3},
-    "Static-Light":  {"profile": 1},
+    "RASP-Fog":      {"profile": "adaptive", "relocate": True,  "tau_h": None, "placement": "objective"},
+    "RASP-Reloc":    {"profile": "adaptive", "relocate": True,  "tau_h": 0,    "placement": "objective"},
+    "RASP-Profile":  {"profile": "adaptive", "relocate": False, "tau_h": 0,    "placement": "objective"},
+    "SA-FF":         {"profile": "adaptive", "relocate": True,  "tau_h": None, "placement": "first_fit"},
+    "Static-Strong": {"profile": 3,          "relocate": False, "tau_h": 0,    "placement": "objective"},
+    # older names, kept so tests 9-12 still run
+    "No-Hysteresis": {"profile": "adaptive", "relocate": True,  "tau_h": 0,    "placement": "objective"},
+    "No-Relocation": {"profile": "adaptive", "relocate": False, "tau_h": None, "placement": "objective"},
+    "Static-Light":  {"profile": 1,          "relocate": False, "tau_h": 0,    "placement": "objective"},
 }
 
 INF = float("inf")
@@ -156,6 +169,12 @@ def shortest_paths(nodes, links):
     return routes
 
 
+def first_fit_order(routes):
+    """SA-FF's fixed node order per ingress: fewest hops from the ingress first,
+    ties broken by node ID; the cloud is always last."""
+    return {s: sorted(FOG, key=lambda j: (len(routes[(s, j)][1]), j)) + [CLOUD] for s in FOG}
+
+
 # ---------------------------------------------------------------- network state
 class Network:
     """Nodes, links, shortest-path routes and the resources reserved on each."""
@@ -163,6 +182,7 @@ class Network:
     def __init__(self):
         self.nodes, self.links = build_topology()
         self.routes = shortest_paths(self.nodes, self.links)
+        self.ff_order = first_fit_order(self.routes)
         self.active, self.active_ids = [], set()
         self.node_used = {n: [0.0, 0.0, 0.0] for n in self.nodes}   # cpu, mem, bw
         self.link_used = {l: 0.0 for l in self.links}
@@ -381,6 +401,21 @@ def feasible(req, nodes, profiles, net, prev_node=None, prev_k=None):
     return out
 
 
+def place_cands(req, nodes, profiles, net, policy, prev_node=None, prev_k=None):
+    """Feasible candidates for a placement decision (admission or relocation).
+    Objective placement returns every feasible (node, k); first-fit returns only
+    the candidates at the first node in the fixed order that has any."""
+    if policy.get("placement", "objective") != "first_fit":
+        return feasible(req, nodes, profiles, net, prev_node, prev_k)
+    allowed = set(nodes)
+    for node in net.ff_order[req["ingress"]]:
+        if node in allowed:
+            cands = feasible(req, [node], profiles, net, prev_node, prev_k)
+            if cands:
+                return cands
+    return []
+
+
 # ---------------------------------------------------------------- Algorithm 1
 def admit(req, t, net, log, policy):
     q_req = required(req["sigma"], threat(t, req["ingress"]))
@@ -388,7 +423,7 @@ def admit(req, t, net, log, policy):
         profiles = [k for k in PROFILES if k >= q_req]
     else:
         profiles = [policy["profile"]]                   # static baselines
-    cands = feasible(req, net.nodes, profiles, net)
+    cands = place_cands(req, list(net.nodes), profiles, net, policy)
     if not cands:
         log.append((t, "REJECT", req, f"needs q{q_req}, no node fits it on time"))
         return False
@@ -411,12 +446,14 @@ def adapt(req, t, net, log, policy):
     cur_node, cur_k = req["node"], req["k"]
 
     if cur_k < q_req:                                    # mandatory upgrade
+        req["mandatory"] = req.get("mandatory", 0) + 1
         stronger = [k for k in PROFILES if k >= q_req]
         cands = feasible(req, [cur_node], stronger, net, cur_node, cur_k)
         event = "UPGRADE"
         if not cands and policy["relocate"]:             # current node can't: try others
             others = [n for n in net.nodes if n != cur_node]
-            cands = feasible(req, others, stronger, net, cur_node, cur_k)
+            req["reloc_tries"] = req.get("reloc_tries", 0) + 1
+            cands = place_cands(req, others, stronger, net, policy, cur_node, cur_k)
             event = "MOVE"
         if not cands:                                    # never kept under-protected
             net.release(req)
@@ -558,7 +595,17 @@ def simulate(policy_name, arrivals, duration, warmup=0.0, epoch=1.0, check=False
     fog_link_cap = sum(l["bw"] for k, l in net.links.items() if CLOUD not in k)
     wan_cap = WAN_BW * len(CLOUD_GATEWAYS)
     violated = [r for r in admitted if r.get("sla_miss") or r["id"] in terminated]
+    upgraded = [r for r in admitted if r.get("mandatory")]
+    reloc_tries = sum(r.get("reloc_tries", 0) for r in admitted)
     return {
+        "mandatory_reqs": len(upgraded),                  # admitted with >= 1 mandatory upgrade
+        "sec_term_pct": (100 * sum(1 for r in upgraded if r["id"] in terminated) / len(upgraded)
+                         if upgraded else 0.0),
+        "reloc_tries": reloc_tries,
+        "reloc_success_pct": 100 * moves / reloc_tries if reloc_tries else float("nan"),
+        "changes_per_1000": 1000 * sum(1 for x in events if x[1] in DECISIONS) / max(1, len(admitted)),
+        "rejected_pct": 100 * count(events, "REJECT") / n,
+        "terminated_pct": 100 * len(terminated) / n,
         "arrivals": len(measured),
         "admitted": len(admitted),
         "rejected": count(events, "REJECT"),

@@ -1,0 +1,368 @@
+{
+ "seeds": [
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10
+ ],
+ "t95": 2.262,
+ "duration_s": 300,
+ "warmup_s": 60,
+ "epoch_s": 1.0,
+ "threat_step_s": 5,
+ "threat_p_down": 0.3,
+ "fig1": {
+  "methods": [
+   "RASP-Fog",
+   "SA-FF",
+   "Static-Strong"
+  ],
+  "rates": [
+   8,
+   12,
+   16,
+   20,
+   24,
+   28,
+   32,
+   36,
+   40,
+   48,
+   56,
+   64,
+   80
+  ],
+  "theta": 2
+ },
+ "fig2": {
+  "methods": [
+   "RASP-Fog",
+   "RASP-Reloc",
+   "RASP-Profile",
+   "SA-FF"
+  ],
+  "p_up": [
+   0.0,
+   0.1,
+   0.2,
+   0.3,
+   0.4,
+   0.5,
+   0.6
+  ],
+  "rate": 24.0
+ },
+ "fig3": {
+  "method": "RASP-Fog",
+  "tau_h": [
+   0,
+   2,
+   4,
+   8,
+   16,
+   32
+  ],
+  "rate": 14.0,
+  "p_up": 0.2
+ },
+ "model": {
+  "tau_h_default_s": 8,
+  "lambda_d": 0.5,
+  "lambda_o": 0.5,
+  "omega": [
+   0.3333333333333333,
+   0.3333333333333333,
+   0.3333333333333333
+  ],
+  "links": [
+   [
+    1,
+    2,
+    2100
+   ],
+   [
+    1,
+    3,
+    3000
+   ],
+   [
+    1,
+    8,
+    4800
+   ],
+   [
+    2,
+    3,
+    1200
+   ],
+   [
+    2,
+    4,
+    1500
+   ],
+   [
+    3,
+    6,
+    3600
+   ],
+   [
+    4,
+    5,
+    1200
+   ],
+   [
+    4,
+    11,
+    3900
+   ],
+   [
+    5,
+    6,
+    2400
+   ],
+   [
+    5,
+    7,
+    1200
+   ],
+   [
+    6,
+    10,
+    2100
+   ],
+   [
+    6,
+    14,
+    3600
+   ],
+   [
+    7,
+    8,
+    1500
+   ],
+   [
+    8,
+    9,
+    1500
+   ],
+   [
+    9,
+    10,
+    1500
+   ],
+   [
+    9,
+    12,
+    600
+   ],
+   [
+    9,
+    13,
+    600
+   ],
+   [
+    11,
+    12,
+    1200
+   ],
+   [
+    11,
+    13,
+    1500
+   ],
+   [
+    12,
+    14,
+    600
+   ],
+   [
+    13,
+    14,
+    300
+   ]
+  ],
+  "link_delay_ms": [
+   4,
+   20
+  ],
+  "link_bw_mbps": 1000,
+  "small_node": {
+   "cpu": 100,
+   "mem": 80000,
+   "bw": 500,
+   "mu": 100
+  },
+  "large_node": {
+   "cpu": 200,
+   "mem": 160000,
+   "bw": 1000,
+   "mu": 200
+  },
+  "large_nodes": [
+   1,
+   3,
+   5,
+   7,
+   9,
+   11,
+   13
+  ],
+  "cloud_gateways": [
+   6,
+   9
+  ],
+  "wan_delay_ms": 100,
+  "wan_bw_mbps": 1000,
+  "cloud_mu": 200,
+  "chi_ms": 2,
+  "max_util": 0.99,
+  "profiles": {
+   "1": {
+    "dc": 0.05,
+    "dm": 0.05,
+    "db": 0.0,
+    "L": 1
+   },
+   "2": {
+    "dc": 0.1,
+    "dm": 0.1,
+    "db": 0.05,
+    "L": 3
+   },
+   "3": {
+    "dc": 0.2,
+    "dm": 0.2,
+    "db": 0.1,
+    "L": 5
+   }
+  },
+  "rho_ms_per_level": 2,
+  "psi_move_ms": 20,
+  "request_classes": {
+   "sensor": {
+    "sigma": 1,
+    "c": 1,
+    "m": 256,
+    "b": 5,
+    "deadline": [
+     200,
+     500
+    ],
+    "hold": 20
+   },
+   "health": {
+    "sigma": 3,
+    "c": 2,
+    "m": 512,
+    "b": 10,
+    "deadline": [
+     50,
+     100
+    ],
+    "hold": 10
+   },
+   "camera": {
+    "sigma": 2,
+    "c": 4,
+    "m": 512,
+    "b": 10,
+    "deadline": [
+     100,
+     250
+    ],
+    "hold": 40
+   },
+   "industrial": {
+    "sigma": 2,
+    "c": 5,
+    "m": 1024,
+    "b": 10,
+    "deadline": [
+     80,
+     200
+    ],
+    "hold": 30
+   }
+  },
+  "demand_spread": 0.5,
+  "regions": {
+   "West": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "Central": [
+    5,
+    6,
+    7,
+    8,
+    10
+   ],
+   "East": [
+    9,
+    11,
+    12,
+    13,
+    14
+   ]
+  },
+  "protect_incumbents": true,
+  "policies": {
+   "RASP-Fog": {
+    "profile": "adaptive",
+    "relocate": true,
+    "tau_h": null,
+    "placement": "objective"
+   },
+   "RASP-Reloc": {
+    "profile": "adaptive",
+    "relocate": true,
+    "tau_h": 0,
+    "placement": "objective"
+   },
+   "RASP-Profile": {
+    "profile": "adaptive",
+    "relocate": false,
+    "tau_h": 0,
+    "placement": "objective"
+   },
+   "SA-FF": {
+    "profile": "adaptive",
+    "relocate": true,
+    "tau_h": null,
+    "placement": "first_fit"
+   },
+   "Static-Strong": {
+    "profile": 3,
+    "relocate": false,
+    "tau_h": 0,
+    "placement": "objective"
+   },
+   "No-Hysteresis": {
+    "profile": "adaptive",
+    "relocate": true,
+    "tau_h": 0,
+    "placement": "objective"
+   },
+   "No-Relocation": {
+    "profile": "adaptive",
+    "relocate": false,
+    "tau_h": null,
+    "placement": "objective"
+   },
+   "Static-Light": {
+    "profile": 1,
+    "relocate": false,
+    "tau_h": 0,
+    "placement": "objective"
+   }
+  }
+ }
+}
