@@ -2,7 +2,7 @@
 fillup_sim.py - a basic "fill-up" test of RASP-Fog, following the paper.
 
 Run it with:   python3 fillup_sim.py
-Needs only plain Python 3 (no extra packages, no randomness).
+Needs only plain Python 3.
 
 The test:
   * 3 fog nodes + 1 cloud (the cloud is just one more candidate node).
