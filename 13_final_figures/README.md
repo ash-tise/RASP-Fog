@@ -10,8 +10,20 @@ python3 tests/test_rasp_nsfnet.py                                  # 10 unit tes
 RATE_FIG2=24 RATE_FIG3=14 python3 13_final_figures/run_figures.py  # ~3 min on 11 cores
 ```
 
-Every setting is written to `config.json`. One row per run is in `figN_raw.csv`, and
-the mean and CI are in `figN_summary.csv`.
+`RATE_FIG2` and `RATE_FIG3` are required for Fig. 2 and Fig. 3; the script stops
+without them. Pass `fig1`, `fig2` or `fig3` to run one figure only.
+
+## Files
+
+| File | Content |
+|---|---|
+| `run_figures.py` | Runs the simulations and draws the figures |
+| `paper_figures.py` | Redraws all three from `figN_summary.csv` at one-column IEEE size (3.5 in, 8 pt fonts, two-panel figures stacked); no re-simulation. Optional argument: output folder |
+| `config.json` | Every setting used |
+| `figN_raw.csv` | One row per (method, x, seed) run |
+| `figN_summary.csv` | Mean and 95% CI half-width per (method, x) |
+| `fig1_workload`, `fig2_threat`, `fig3_hysteresis` (.png, .pdf) | Figures from `run_figures.py` |
+| `nsfnet_fig1_workload`, `nsfnet_fig2_threat`, `nsfnet_fig3_hysteresis` (.pdf, .png) | Print-size figures from `paper_figures.py`; only the PDFs are committed |
 
 ## Methods (one code path, four switches in `POLICIES`)
 
@@ -37,7 +49,7 @@ the mean and CI are in `figN_summary.csv`.
 
 **Fig. 2 (threat increases, 24 req/s).** The denominator is admitted requests with at least one mandatory upgrade. At p_up = 0.6, RASP-Profile (no relocation) terminates 7.15 ± 0.29%, about 3× the methods that can relocate: RASP-Fog 2.34 ± 0.36, SA-FF 2.66 ± 0.29, RASP-Reloc 2.79 ± 0.28. RASP-Fog vs SA-FF is within noise at most points, and the paired difference is −0.1 to −0.3 points. Relocation succeeds for about 72–75% of attempts and adds about 36 ms (20 ms ψ plus longer paths). Admission rejection (5.1–6.5%) is reported separately in `fig2_summary.csv`. No admitted request missed its deadline (`sla_miss_pct` = 0). Note that `sla_violation_pct` in the CSVs counts terminations as violations, so it is not a pure deadline metric.
 
-**Fig. 3 (hysteresis, RASP-Fog, 14 req/s).** Profile changes per 1,000 admitted sessions drop from 829 at τ_H = 0 to 579 at 8 s and 313 at 32 s. Security-only CPU rises from 6.99% to 8.09%, because requests hold stronger profiles longer. τ_H = 2 and 4 s differ little from 0, because the threat only changes every 5 s. Secure completion is 100% at every τ_H at this load.
+**Fig. 3 (hysteresis, RASP-Fog, 14 req/s).** Profile changes per 1,000 admitted sessions drop from 829 at τ_H = 0 to 579 at 8 s and 313 at 32 s. Security-only CPU rises from 6.99% to 8.09%, because requests hold stronger profiles longer. τ_H = 2 and 4 s differ little from 0, because the threat only changes every 5 s. Secure completion is at least 99.99% at every τ_H at this load.
 
 ## Not modelled
 

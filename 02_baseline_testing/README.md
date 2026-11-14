@@ -16,7 +16,9 @@ python3 02_baseline_testing/baseline_test.py
 | Under-s | request-seconds spent below q_req |
 | Secure | requests active at the end that were never under-protected |
 | Changes | upgrades, relocations and downgrades |
+| Moves | relocations (node changes) |
 | Delay | mean delay at admission (ms) |
+| Cloud | requests admitted to the cloud |
 
 ## Results
 

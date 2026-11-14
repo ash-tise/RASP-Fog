@@ -5,8 +5,8 @@ two-column print sizes (no re-simulation).
     python3 13_final_figures/paper_figures.py [output_dir]
 
 Writes nsfnet_fig1_workload.pdf, nsfnet_fig2_threat.pdf and
-nsfnet_fig3_hysteresis.pdf (plus .png). Fig. 1 is sized for a
-full-width figure* (7.16 in); Fig. 2 and Fig. 3 (panels stacked) for one column (3.5 in). Fonts are 8 pt.
+nsfnet_fig3_hysteresis.pdf (plus .png). All three are sized for one column (3.5 in);
+two-panel figures stack panels (a) and (b) vertically. Fonts are 8 pt.
 """
 import csv
 import os
@@ -60,10 +60,11 @@ def save(fig, name):
 
 rows = load("fig1")
 m1 = ["RASP-Fog", "SA-FF", "Static-Strong"]
-fig, ax = plt.subplots(1, 2, figsize=(7.16, 2.25))
+fig, ax = plt.subplots(2, 1, figsize=(3.5, 3.9))
 draw(ax[0], rows, m1, "secure_pct", "Arrival rate (requests/s)", "Secure completion (%)", "(a)")
 draw(ax[1], rows, m1, "sec_cpu_pct", "Arrival rate (requests/s)", "Security-only fog CPU (%)", "(b)")
 ax[0].legend(loc="lower left")
+ax[1].legend(*ax[0].get_legend_handles_labels(), loc="center right")
 save(fig, "nsfnet_fig1_workload")
 
 rows = load("fig2")
