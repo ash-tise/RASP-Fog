@@ -18,7 +18,7 @@ without them. Pass `fig1`, `fig2` or `fig3` to run one figure only.
 | File | Content |
 |---|---|
 | `run_figures.py` | Runs the simulations and draws the figures |
-| `paper_figures.py` | Redraws all three from `figN_summary.csv` at one-column IEEE size (3.5 in, 8 pt fonts, two-panel figures stacked); no re-simulation. Optional argument: output folder |
+| `paper_figures.py` | Redraws all three from `figN_summary.csv` at one-column IEEE size (3.5 in, 8 pt Times New Roman, two-panel figures stacked) in the shared `../figstyle.py` style (SciencePlots IEEE); no re-simulation. Fig. 2 omits p_up = 0, where the termination rate is 0/0. Optional argument: output folder |
 | `config.json` | Every setting used |
 | `figN_raw.csv` | One row per (method, x, seed) run |
 | `figN_summary.csv` | Mean and 95% CI half-width per (method, x) |
