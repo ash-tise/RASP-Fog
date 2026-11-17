@@ -41,7 +41,7 @@ LAMBDA_D = [0.0, 0.25, 0.5, 0.75, 1.0]
 OMEGAS = [(1/3, 1/3, 1/3), (1, 0, 0), (0, 1, 0), (0, 0, 1),
           (0.5, 0.5, 0), (0.5, 0, 0.5), (0, 0.5, 0.5), (0.6, 0.2, 0.2)]
 DEFAULT = (0.5, (1/3, 1/3, 1/3))
-KEYS = ["secure_pct", "sec_cpu_pct", "rejected_pct", "sla_violation_pct", "sec_term_pct",
+KEYS = ["secure_pct", "sec_cpu_pct", "rejected_pct", "sla_violation_pct", "service_failure_pct", "sec_term_pct",
         "fog_util_pct", "mean_delay", "cloud_pct"]
 
 
@@ -70,6 +70,9 @@ def grid(tasks):
 
 
 def mean_ci(vals):
+    vals = [v for v in vals if not (isinstance(v, float) and math.isnan(v))]  # sec_term_pct is NaN for static baselines
+    if not vals:
+        return float("nan"), float("nan")
     m = statistics.mean(vals)
     return m, (T95 * statistics.stdev(vals) / math.sqrt(len(vals)) if len(vals) > 1 else 0.0)
 

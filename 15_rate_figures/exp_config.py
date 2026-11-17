@@ -141,7 +141,7 @@ def run(method, seed, rate):
     for k in ("secure_pct", "sec_term_pct", "mean_delay", "changes_per_1000",
               "rejected_pct", "terminated_pct", "sla_miss_pct", "fog_util_pct",
               "sec_cpu_pct", "mandatory_reqs", "moves", "upgrades", "downgrades",
-              "arrivals", "admitted"):
+              "arrivals", "admitted", "service_failure_pct", "reconfig_ms_per_req"):
         row[k] = m[k]
     row["cloud_pct"] = 100 * m["cloud"] / n
     return row

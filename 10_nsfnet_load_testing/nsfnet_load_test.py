@@ -35,6 +35,7 @@ WARMUP = 30               # sessions arriving before this are not counted
 T95 = 2.776               # t value for a 95% CI with 5 seeds
 
 KEYS = ["secure_pct", "rejected_pct", "dropped_pct", "sla_miss_pct", "sla_violation_pct",
+        "service_failure_pct",
         "upgrades", "moves", "terminated", "failed_in_place", "moves_per_1000",
         "reloc_added_ms", "reloc_added_hops", "sec_cpu_pct", "fog_util_pct",
         "link_util_pct", "wan_util_pct", "cloud_pct", "peak_wan_pct"]
@@ -57,6 +58,7 @@ def run_one(task):
         "dropped_pct": 100 * m["terminated"] / n,
         "sla_miss_pct": m["sla_miss_pct"],
         "sla_violation_pct": m["sla_violation_pct"],
+        "service_failure_pct": m["service_failure_pct"],
         "upgrades": m["upgrades"],
         "moves": m["moves"],
         "terminated": m["terminated"],

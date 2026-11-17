@@ -50,7 +50,8 @@ METRICS = ["secure_pct", "rejected_pct", "terminated_pct", "sla_violation_pct",
            "sla_miss_pct", "sec_cpu_pct", "fog_util_pct", "sec_term_pct",
            "mandatory_reqs", "reloc_tries", "reloc_success_pct", "moves",
            "reloc_added_ms", "changes_per_1000", "upgrades", "downgrades",
-           "under", "cloud_pct", "mean_delay", "arrivals", "admitted"]
+           "under", "cloud_pct", "mean_delay", "arrivals", "admitted",
+           "service_failure_pct", "reconfig_ms_per_req", "decision_delay"]
 
 
 # ---------------------------------------------------------------- one run

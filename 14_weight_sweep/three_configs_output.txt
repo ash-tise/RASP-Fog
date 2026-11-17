@@ -1,0 +1,102 @@
+
+== fixed_theta2 @ 16 req/s
+  A RASP-Fog      secure 100.00±0.00 (vs A/RASP +0.00±0.00)  fail 0.00  rej 0.00  secCPU 6.87  cloud 0.0  delay 35.7  reconf 0.00
+  A SA-FF         secure  99.99±0.01 (vs A/RASP -0.01±0.01)  fail 0.00  rej 0.01  secCPU 6.87  cloud 0.0  delay 38.1  reconf 0.00
+  A RASP-Profile  secure 100.00±0.00 (vs A/RASP +0.00±0.00)  fail 0.00  rej 0.00  secCPU 6.87  cloud 0.0  delay 35.7  reconf 0.00
+  A RASP-Reloc    secure 100.00±0.00 (vs A/RASP +0.00±0.00)  fail 0.00  rej 0.00  secCPU 6.87  cloud 0.0  delay 35.7  reconf 0.00
+  A Static-Strong secure  99.96±0.04 (vs A/RASP -0.04±0.04)  fail 0.00  rej 0.04  secCPU 12.97  cloud 0.0  delay 43.3  reconf 0.00
+  B RASP-Fog      secure 100.00±0.00 (vs A/RASP +0.00±0.00)  fail 0.00  rej 0.00  secCPU 3.84  cloud 30.6  delay 70.5  reconf 0.00
+  B SA-FF         secure  99.99±0.01 (vs A/RASP -0.01±0.01)  fail 0.00  rej 0.01  secCPU 6.87  cloud 0.0  delay 38.1  reconf 0.00
+  B RASP-Profile  secure 100.00±0.00 (vs A/RASP +0.00±0.00)  fail 0.00  rej 0.00  secCPU 3.84  cloud 30.6  delay 70.5  reconf 0.00
+  B RASP-Reloc    secure 100.00±0.00 (vs A/RASP +0.00±0.00)  fail 0.00  rej 0.00  secCPU 3.84  cloud 30.6  delay 70.5  reconf 0.00
+  B Static-Strong secure 100.00±0.00 (vs A/RASP +0.00±0.00)  fail 0.00  rej 0.00  secCPU 6.58  cloud 35.7  delay 80.7  reconf 0.00
+  C RASP-Fog      secure 100.00±0.00 (vs A/RASP +0.00±0.00)  fail 0.00  rej 0.00  secCPU 3.58  cloud 36.8  delay 77.1  reconf 0.00
+  C SA-FF         secure  99.99±0.01 (vs A/RASP -0.01±0.01)  fail 0.00  rej 0.01  secCPU 6.87  cloud 0.0  delay 38.1  reconf 0.00
+  C RASP-Profile  secure 100.00±0.00 (vs A/RASP +0.00±0.00)  fail 0.00  rej 0.00  secCPU 3.58  cloud 36.8  delay 77.1  reconf 0.00
+  C RASP-Reloc    secure 100.00±0.00 (vs A/RASP +0.00±0.00)  fail 0.00  rej 0.00  secCPU 3.58  cloud 36.8  delay 77.1  reconf 0.00
+  C Static-Strong secure 100.00±0.00 (vs A/RASP +0.00±0.00)  fail 0.00  rej 0.00  secCPU 6.47  cloud 38.7  delay 83.5  reconf 0.00
+
+== fixed_theta2 @ 24 req/s
+  A RASP-Fog      secure  94.55±0.40 (vs A/RASP +0.00±0.00)  fail 0.00  rej 5.45  secCPU 8.77  cloud 4.2  delay 61.1  reconf 0.00
+  A SA-FF         secure  94.10±0.50 (vs A/RASP -0.46±0.23)  fail 0.00  rej 5.90  secCPU 8.80  cloud 4.2  delay 61.3  reconf 0.00
+  A RASP-Profile  secure  94.55±0.40 (vs A/RASP +0.00±0.00)  fail 0.00  rej 5.45  secCPU 8.77  cloud 4.2  delay 61.1  reconf 0.00
+  A RASP-Reloc    secure  94.55±0.40 (vs A/RASP +0.00±0.00)  fail 0.00  rej 5.45  secCPU 8.77  cloud 4.2  delay 61.1  reconf 0.00
+  A Static-Strong secure  92.50±0.47 (vs A/RASP -2.05±0.25)  fail 0.00  rej 7.50  secCPU 15.23  cloud 5.4  delay 66.4  reconf 0.00
+  B RASP-Fog      secure 100.00±0.00 (vs A/RASP +5.45±0.40)  fail 0.00  rej 0.00  secCPU 6.64  cloud 23.2  delay 65.7  reconf 0.00
+  B SA-FF         secure  94.10±0.50 (vs A/RASP -0.46±0.23)  fail 0.00  rej 5.90  secCPU 8.80  cloud 4.2  delay 61.3  reconf 0.00
+  B RASP-Profile  secure 100.00±0.00 (vs A/RASP +5.45±0.40)  fail 0.00  rej 0.00  secCPU 6.64  cloud 23.2  delay 65.7  reconf 0.00
+  B RASP-Reloc    secure 100.00±0.00 (vs A/RASP +5.45±0.40)  fail 0.00  rej 0.00  secCPU 6.64  cloud 23.2  delay 65.7  reconf 0.00
+  B Static-Strong secure  99.99±0.01 (vs A/RASP +5.44±0.40)  fail 0.00  rej 0.01  secCPU 11.74  cloud 25.9  delay 75.2  reconf 0.00
+  C RASP-Fog      secure 100.00±0.00 (vs A/RASP +5.45±0.40)  fail 0.00  rej 0.00  secCPU 6.39  cloud 26.1  delay 67.9  reconf 0.00
+  C SA-FF         secure  94.10±0.50 (vs A/RASP -0.46±0.23)  fail 0.00  rej 5.90  secCPU 8.80  cloud 4.2  delay 61.3  reconf 0.00
+  C RASP-Profile  secure 100.00±0.00 (vs A/RASP +5.45±0.40)  fail 0.00  rej 0.00  secCPU 6.39  cloud 26.1  delay 67.9  reconf 0.00
+  C RASP-Reloc    secure 100.00±0.00 (vs A/RASP +5.45±0.40)  fail 0.00  rej 0.00  secCPU 6.39  cloud 26.1  delay 67.9  reconf 0.00
+  C Static-Strong secure  99.99±0.02 (vs A/RASP +5.44±0.40)  fail 0.00  rej 0.01  secCPU 11.93  cloud 27.7  delay 76.7  reconf 0.00
+
+== fixed_theta2 @ 32 req/s
+  A RASP-Fog      secure  89.01±0.35 (vs A/RASP +0.00±0.00)  fail 0.00  rej 10.99  secCPU 8.96  cloud 10.3  delay 70.8  reconf 0.00
+  A SA-FF         secure  87.83±0.40 (vs A/RASP -1.18±0.28)  fail 0.00  rej 12.17  secCPU 8.97  cloud 10.1  delay 71.5  reconf 0.00
+  A RASP-Profile  secure  89.01±0.35 (vs A/RASP +0.00±0.00)  fail 0.00  rej 10.99  secCPU 8.96  cloud 10.3  delay 70.8  reconf 0.00
+  A RASP-Reloc    secure  89.01±0.35 (vs A/RASP +0.00±0.00)  fail 0.00  rej 10.99  secCPU 8.96  cloud 10.3  delay 70.8  reconf 0.00
+  A Static-Strong secure  86.72±0.29 (vs A/RASP -2.29±0.19)  fail 0.00  rej 13.28  secCPU 15.39  cloud 10.7  delay 74.8  reconf 0.00
+  B RASP-Fog      secure  95.38±0.61 (vs A/RASP +6.37±0.38)  fail 0.00  rej 4.62  secCPU 8.77  cloud 16.8  delay 73.3  reconf 0.00
+  B SA-FF         secure  87.83±0.40 (vs A/RASP -1.18±0.28)  fail 0.00  rej 12.17  secCPU 8.97  cloud 10.1  delay 71.5  reconf 0.00
+  B RASP-Profile  secure  95.38±0.61 (vs A/RASP +6.37±0.38)  fail 0.00  rej 4.62  secCPU 8.77  cloud 16.8  delay 73.3  reconf 0.00
+  B RASP-Reloc    secure  95.38±0.61 (vs A/RASP +6.37±0.38)  fail 0.00  rej 4.62  secCPU 8.77  cloud 16.8  delay 73.3  reconf 0.00
+  B Static-Strong secure  93.18±0.72 (vs A/RASP +4.17±0.53)  fail 0.00  rej 6.82  secCPU 14.85  cloud 18.7  delay 78.6  reconf 0.00
+  C RASP-Fog      secure  95.50±0.55 (vs A/RASP +6.49±0.39)  fail 0.00  rej 4.50  secCPU 8.73  cloud 17.9  delay 73.7  reconf 0.00
+  C SA-FF         secure  87.83±0.40 (vs A/RASP -1.18±0.28)  fail 0.00  rej 12.17  secCPU 8.97  cloud 10.1  delay 71.5  reconf 0.00
+  C RASP-Profile  secure  95.50±0.55 (vs A/RASP +6.49±0.39)  fail 0.00  rej 4.50  secCPU 8.73  cloud 17.9  delay 73.7  reconf 0.00
+  C RASP-Reloc    secure  95.50±0.55 (vs A/RASP +6.49±0.39)  fail 0.00  rej 4.50  secCPU 8.73  cloud 17.9  delay 73.7  reconf 0.00
+  C Static-Strong secure  92.31±0.60 (vs A/RASP +3.31±0.43)  fail 0.00  rej 7.69  secCPU 14.87  cloud 20.0  delay 79.6  reconf 0.00
+
+== walk_p0.3 @ 16 req/s
+  A RASP-Fog      secure  99.99±0.01 (vs A/RASP +0.00±0.00)  fail 0.01  rej 0.00  secCPU 9.59  cloud 0.0  delay 38.7  reconf 1.45
+  A SA-FF         secure  99.99±0.01 (vs A/RASP -0.00±0.01)  fail 0.01  rej 0.00  secCPU 9.59  cloud 0.0  delay 40.1  reconf 1.54
+  A RASP-Profile  secure  99.86±0.08 (vs A/RASP -0.13±0.08)  fail 0.14  rej 0.00  secCPU 8.73  cloud 0.0  delay 37.9  reconf 2.25
+  A RASP-Reloc    secure  99.98±0.01 (vs A/RASP -0.01±0.02)  fail 0.02  rej 0.00  secCPU 8.74  cloud 0.0  delay 38.0  reconf 2.28
+  A Static-Strong secure  99.96±0.04 (vs A/RASP -0.03±0.04)  fail 0.00  rej 0.04  secCPU 12.97  cloud 0.0  delay 43.3  reconf 0.00
+  B RASP-Fog      secure 100.00±0.00 (vs A/RASP +0.01±0.01)  fail 0.00  rej 0.00  secCPU 5.27  cloud 30.7  delay 71.8  reconf 1.52
+  B SA-FF         secure  99.99±0.01 (vs A/RASP -0.00±0.01)  fail 0.01  rej 0.00  secCPU 9.59  cloud 0.0  delay 40.1  reconf 1.54
+  B RASP-Profile  secure  99.53±0.07 (vs A/RASP -0.46±0.07)  fail 0.47  rej 0.00  secCPU 4.76  cloud 31.0  delay 71.6  reconf 2.23
+  B RASP-Reloc    secure 100.00±0.00 (vs A/RASP +0.01±0.01)  fail 0.00  rej 0.00  secCPU 4.85  cloud 30.7  delay 71.4  reconf 2.35
+  B Static-Strong secure 100.00±0.00 (vs A/RASP +0.01±0.01)  fail 0.00  rej 0.00  secCPU 6.58  cloud 35.7  delay 80.7  reconf 0.00
+  C RASP-Fog      secure 100.00±0.00 (vs A/RASP +0.01±0.01)  fail 0.00  rej 0.00  secCPU 4.99  cloud 34.3  delay 76.2  reconf 1.53
+  C SA-FF         secure  99.99±0.01 (vs A/RASP -0.00±0.01)  fail 0.01  rej 0.00  secCPU 9.59  cloud 0.0  delay 40.1  reconf 1.54
+  C RASP-Profile  secure  99.47±0.08 (vs A/RASP -0.53±0.09)  fail 0.53  rej 0.00  secCPU 4.48  cloud 34.9  delay 76.2  reconf 2.23
+  C RASP-Reloc    secure 100.00±0.00 (vs A/RASP +0.01±0.01)  fail 0.00  rej 0.00  secCPU 4.58  cloud 34.3  delay 76.1  reconf 2.36
+  C Static-Strong secure 100.00±0.00 (vs A/RASP +0.01±0.01)  fail 0.00  rej 0.00  secCPU 6.47  cloud 38.7  delay 83.5  reconf 0.00
+
+== walk_p0.3 @ 24 req/s
+  A RASP-Fog      secure  93.38±0.56 (vs A/RASP +0.00±0.00)  fail 0.67  rej 5.94  secCPU 11.68  cloud 4.5  delay 62.4  reconf 1.77
+  A SA-FF         secure  93.32±0.56 (vs A/RASP -0.07±0.27)  fail 0.75  rej 5.94  secCPU 11.70  cloud 4.7  delay 62.2  reconf 1.89
+  A RASP-Profile  secure  92.85±0.63 (vs A/RASP -0.54±0.33)  fail 2.01  rej 5.14  secCPU 10.74  cloud 3.7  delay 60.1  reconf 2.18
+  A RASP-Reloc    secure  93.68±0.49 (vs A/RASP +0.30±0.34)  fail 0.73  rej 5.59  secCPU 10.77  cloud 4.4  delay 61.7  reconf 2.69
+  A Static-Strong secure  92.50±0.47 (vs A/RASP -0.89±0.30)  fail 0.00  rej 7.50  secCPU 15.23  cloud 5.4  delay 66.4  reconf 0.00
+  B RASP-Fog      secure  99.99±0.01 (vs A/RASP +6.60±0.55)  fail 0.01  rej 0.01  secCPU 9.12  cloud 23.7  delay 68.9  reconf 1.53
+  B SA-FF         secure  93.32±0.56 (vs A/RASP -0.07±0.27)  fail 0.75  rej 5.94  secCPU 11.70  cloud 4.7  delay 62.2  reconf 1.89
+  B RASP-Profile  secure  99.51±0.05 (vs A/RASP +6.13±0.54)  fail 0.49  rej 0.00  secCPU 8.22  cloud 24.2  delay 68.3  reconf 2.25
+  B RASP-Reloc    secure  99.99±0.01 (vs A/RASP +6.61±0.55)  fail 0.00  rej 0.01  secCPU 8.36  cloud 23.9  delay 68.6  reconf 2.37
+  B Static-Strong secure  99.99±0.01 (vs A/RASP +6.61±0.56)  fail 0.00  rej 0.01  secCPU 11.74  cloud 25.9  delay 75.2  reconf 0.00
+  C RASP-Fog      secure  99.99±0.01 (vs A/RASP +6.61±0.55)  fail 0.01  rej 0.00  secCPU 8.91  cloud 25.4  delay 70.3  reconf 1.53
+  C SA-FF         secure  93.32±0.56 (vs A/RASP -0.07±0.27)  fail 0.75  rej 5.94  secCPU 11.70  cloud 4.7  delay 62.2  reconf 1.89
+  C RASP-Profile  secure  99.53±0.06 (vs A/RASP +6.15±0.54)  fail 0.46  rej 0.00  secCPU 8.03  cloud 26.1  delay 69.7  reconf 2.25
+  C RASP-Reloc    secure  99.99±0.01 (vs A/RASP +6.61±0.55)  fail 0.00  rej 0.00  secCPU 8.17  cloud 25.6  delay 69.9  reconf 2.37
+  C Static-Strong secure  99.99±0.02 (vs A/RASP +6.61±0.56)  fail 0.00  rej 0.01  secCPU 11.93  cloud 27.7  delay 76.7  reconf 0.00
+
+== walk_p0.3 @ 32 req/s
+  A RASP-Fog      secure  87.88±0.40 (vs A/RASP +0.00±0.00)  fail 0.77  rej 11.34  secCPU 11.81  cloud 10.3  delay 71.3  reconf 1.85
+  A SA-FF         secure  87.24±0.36 (vs A/RASP -0.64±0.25)  fail 0.85  rej 11.91  secCPU 11.84  cloud 10.2  delay 71.6  reconf 1.94
+  A RASP-Profile  secure  87.23±0.44 (vs A/RASP -0.65±0.37)  fail 2.06  rej 10.71  secCPU 10.91  cloud 9.5  delay 69.8  reconf 2.20
+  A RASP-Reloc    secure  88.09±0.45 (vs A/RASP +0.21±0.43)  fail 0.88  rej 11.03  secCPU 10.92  cloud 10.0  delay 70.5  reconf 2.74
+  A Static-Strong secure  86.72±0.29 (vs A/RASP -1.17±0.27)  fail 0.00  rej 13.28  secCPU 15.39  cloud 10.7  delay 74.8  reconf 0.00
+  B RASP-Fog      secure  94.04±0.63 (vs A/RASP +6.15±0.53)  fail 0.60  rej 5.36  secCPU 11.42  cloud 17.6  delay 74.9  reconf 1.71
+  B SA-FF         secure  87.24±0.36 (vs A/RASP -0.64±0.25)  fail 0.85  rej 11.91  secCPU 11.84  cloud 10.2  delay 71.6  reconf 1.94
+  B RASP-Profile  secure  93.99±0.62 (vs A/RASP +6.11±0.44)  fail 1.75  rej 4.25  secCPU 10.51  cloud 17.9  delay 74.0  reconf 2.18
+  B RASP-Reloc    secure  94.31±0.59 (vs A/RASP +6.43±0.51)  fail 0.71  rej 4.98  secCPU 10.57  cloud 17.7  delay 74.4  reconf 2.58
+  B Static-Strong secure  93.18±0.72 (vs A/RASP +5.29±0.57)  fail 0.00  rej 6.82  secCPU 14.85  cloud 18.7  delay 78.6  reconf 0.00
+  C RASP-Fog      secure  93.90±0.67 (vs A/RASP +6.02±0.57)  fail 0.59  rej 5.51  secCPU 11.41  cloud 18.4  delay 75.2  reconf 1.70
+  C SA-FF         secure  87.24±0.36 (vs A/RASP -0.64±0.25)  fail 0.85  rej 11.91  secCPU 11.84  cloud 10.2  delay 71.6  reconf 1.94
+  C RASP-Profile  secure  93.82±0.56 (vs A/RASP +5.94±0.45)  fail 1.73  rej 4.45  secCPU 10.50  cloud 19.0  delay 74.2  reconf 2.18
+  C RASP-Reloc    secure  94.28±0.54 (vs A/RASP +6.40±0.42)  fail 0.72  rej 5.00  secCPU 10.55  cloud 18.7  delay 74.7  reconf 2.56
+  C Static-Strong secure  92.31±0.60 (vs A/RASP +4.43±0.50)  fail 0.00  rej 7.69  secCPU 14.87  cloud 20.0  delay 79.6  reconf 0.00

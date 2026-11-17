@@ -22,7 +22,8 @@ import exp_config as cfg
 
 METRICS = ["secure_pct", "sec_term_pct", "mean_delay", "changes_per_1000",
            "rejected_pct", "terminated_pct", "sla_miss_pct", "fog_util_pct",
-           "sec_cpu_pct", "cloud_pct", "mandatory_reqs", "moves", "arrivals", "admitted"]
+           "sec_cpu_pct", "cloud_pct", "mandatory_reqs", "moves", "arrivals", "admitted",
+           "service_failure_pct", "reconfig_ms_per_req"]
 
 
 def task(x):

@@ -428,7 +428,8 @@ def admit(req, t, net, log, policy):
         log.append((t, "REJECT", req, f"needs q{q_req}, no node fits it on time"))
         return False
     best = choose(cands)
-    req.update(node=best["node"], k=best["k"], history=[(t, q_req)], delay=best["d"])
+    req.update(node=best["node"], k=best["k"], history=[(t, q_req)], delay=best["d"],
+               last_change=t)                    # admission counts as a profile change
     net.place(req)
     log.append((t, "ADMIT", req, f"in at N{req['ingress']}, needs q{q_req} -> "
                 f"{name(best['node'])} q{best['k']}  delay {best['d']:.0f} ms "
@@ -437,6 +438,15 @@ def admit(req, t, net, log, policy):
 
 
 # ---------------------------------------------------------------- Algorithm 2
+def add_reconfig(req, cur_node, cur_k, best):
+    """Record the one-time reconfiguration overhead of a decision: the profile
+    transition rho plus the relocation psi if the node changes. Kept apart from
+    the steady-state delay metric."""
+    rho = RHO_PER_LEVEL * abs(best["k"] - cur_k)
+    psi = PSI_MOVE if best["node"] != cur_node else 0
+    req["reconfig_ms"] = req.get("reconfig_ms", 0.0) + rho + psi
+
+
 def adapt(req, t, net, log, policy):
     if policy["profile"] != "adaptive":                  # static baselines never change
         return
@@ -466,16 +476,22 @@ def adapt(req, t, net, log, policy):
             req.setdefault("relocations", []).append(
                 {"t": t, "from": cur_node, "to": best["node"], "added_nu": new[0] - old[0],
                  "added_hops": len(new[1]) - len(old[1])})
+        add_reconfig(req, cur_node, cur_k, best)
         net.reserve(req, -1)
-        req.update(node=best["node"], k=best["k"], delay=best["d"])
+        req.update(node=best["node"], k=best["k"], delay=best["d"], last_change=t)
         net.reserve(req, +1)
         log.append((t, event, req, f"q{cur_k} -> q{best['k']} at {name(best['node'])}"
                     f"  (delay {best['d']:.0f} ms)"))
         return
 
-    # optional downgrade: same node only, and only if the weaker profile was enough
-    # for the whole holding interval [t - tau_h, t]
-    peak = max(q for s, q in req["history"] if s >= t - tau_h)
+    # optional downgrade: same node only. The holding window [t - tau_h, t] must be
+    # complete and lie entirely after the last profile change (admission counts as
+    # one), and the weaker profile must meet q_req at every sample in it, the first
+    # included. Upgrades above stay immediate.
+    start = t - tau_h
+    if start < req.get("last_change", -INF) - 1e-9:
+        return
+    peak = max(q for s, q in req["history"] if s >= start - 1e-9)
     weaker = [k for k in PROFILES if q_req <= k < cur_k and k >= peak]
     if not weaker:
         return
@@ -484,8 +500,9 @@ def adapt(req, t, net, log, policy):
         return
     best = choose(cands)
     if best["k"] != cur_k:
+        add_reconfig(req, cur_node, cur_k, best)
         net.reserve(req, -1)
-        req.update(k=best["k"], delay=best["d"])
+        req.update(k=best["k"], delay=best["d"], last_change=t)
         net.reserve(req, +1)
         log.append((t, "DOWNGRADE", req, f"q{cur_k} -> q{best['k']} at {name(cur_node)}"))
 
@@ -511,8 +528,12 @@ def simulate(policy_name, arrivals, duration, warmup=0.0, epoch=1.0, check=False
     they end, and every `epoch` seconds Algorithm 2 re-evaluates every active
     request. After the last arrival the run continues until every session ends.
     A request misses its SLA at runtime if its end-to-end delay ever exceeds its
-    deadline; that delay only grows when load is added to its node, so the
-    requests on a node are re-checked whenever a request is placed there
+    deadline (sla_miss_pct); service_failure_pct adds security-triggered
+    terminations. mean_delay is the steady-state delay sampled at every decision
+    epoch, without the one-time relocation (psi) and profile-switch (rho) terms,
+    which are reported separately as reconfig_ms. A request's runtime delay only
+    grows when load is added to its node, so the requests on a node are
+    re-checked whenever a request is placed there
     (with PROTECT on, placements are only made if this cannot happen).
     Metrics cover requests arriving in [warmup, duration); CPU is integrated over
     the same window. check=True also verifies capacities and running totals at
@@ -563,6 +584,10 @@ def simulate(policy_name, arrivals, duration, warmup=0.0, epoch=1.0, check=False
                                        and r["delay"] > r["deadline"] + 1e-9)
             for r in net.active:
                 protection_check(r, now)
+                # steady-state delay (nu + chi + c/mu + L) under the current load;
+                # the one-time psi and rho are excluded (see reconfig_ms)
+                r["delay_sum"] = r.get("delay_sum", 0.0) + current_delay(r, net)
+                r["delay_n"] = r.get("delay_n", 0) + 1
             for n in FOG:
                 sla_check(n)
             for l, used in net.link_used.items():
@@ -597,10 +622,16 @@ def simulate(policy_name, arrivals, duration, warmup=0.0, epoch=1.0, check=False
     violated = [r for r in admitted if r.get("sla_miss") or r["id"] in terminated]
     upgraded = [r for r in admitted if r.get("mandatory")]
     reloc_tries = sum(r.get("reloc_tries", 0) for r in admitted)
+    delay_n = sum(r.get("delay_n", 0) for r in admitted)
+    reconfig = sum(r.get("reconfig_ms", 0.0) for r in admitted)
+    n_changes = sum(1 for x in events if x[1] in DECISIONS)
+    service_failure_pct = 100 * len(violated) / n
     return {
         "mandatory_reqs": len(upgraded),                  # admitted with >= 1 mandatory upgrade
+        # undefined (NaN), not 0, when nothing needed a mandatory upgrade; static
+        # baselines never upgrade, so theirs is always NaN
         "sec_term_pct": (100 * sum(1 for r in upgraded if r["id"] in terminated) / len(upgraded)
-                         if upgraded else 0.0),
+                         if upgraded else float("nan")),
         "reloc_tries": reloc_tries,
         "reloc_success_pct": 100 * moves / reloc_tries if reloc_tries else float("nan"),
         "changes_per_1000": 1000 * sum(1 for x in events if x[1] in DECISIONS) / max(1, len(admitted)),
@@ -612,8 +643,11 @@ def simulate(policy_name, arrivals, duration, warmup=0.0, epoch=1.0, check=False
         "secure": len(secure),
         "secure_pct": 100 * len(secure) / n,
         "sla_miss": sum(1 for r in admitted if r.get("sla_miss")),
+        # modeled deadline violations only (delay pushed past the deadline at runtime)
         "sla_miss_pct": 100 * sum(1 for r in admitted if r.get("sla_miss")) / n,
-        "sla_violation_pct": 100 * len(violated) / n,       # admitted, then dropped or late
+        # deadline misses + security-triggered terminations (each request counted once)
+        "service_failure_pct": service_failure_pct,
+        "sla_violation_pct": service_failure_pct,           # old name, same value
         "under": sum(1 for r in admitted if r.get("under")),
         "terminated": len(terminated),
         "upgrades": count(events, "UPGRADE"),
@@ -626,7 +660,17 @@ def simulate(policy_name, arrivals, duration, warmup=0.0, epoch=1.0, check=False
         "cloud": sum(1 for r in admitted if r["node"] == CLOUD),
         "health_cloud": sum(1 for r in admitted if r["node"] == CLOUD and r["kind"] == "health"),
         "away": sum(1 for r in admitted if r["node"] != r["ingress"]),
-        "mean_delay": sum(r["delay"] for r in admitted) / max(1, len(admitted)),
+        # mean steady-state delay over every (request, decision epoch) sample of the
+        # admitted requests; excludes psi and rho, which are in reconfig_ms
+        "mean_delay": (sum(r.get("delay_sum", 0.0) for r in admitted) / delay_n
+                       if delay_n else float("nan")),
+        "delay_samples": delay_n,
+        # old definition: delay computed at each request's last decision, psi/rho included
+        "decision_delay": sum(r["delay"] for r in admitted) / max(1, len(admitted)),
+        # one-time reconfiguration overhead (rho + psi) summed over all decisions
+        "reconfig_ms": reconfig,
+        "reconfig_ms_per_req": reconfig / max(1, len(admitted)),
+        "reconfig_ms_per_change": reconfig / n_changes if n_changes else float("nan"),
         "fog_util_pct": 100 * acc["cpu"] / (fog_cap * span),
         "sec_cpu_pct": 100 * acc["sec"] / (fog_cap * span),
         "peak_link_pct": 100 * acc["peak_link"],

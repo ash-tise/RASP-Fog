@@ -159,6 +159,26 @@ def test_downgrade_waits_for_hysteresis():
     nf.TAU_H = 8
 
 
+def test_downgrade_window_starts_at_last_change():
+    """Admitted over-protected (q3 while q1 is enough): no downgrade until a full
+    tau_h has passed since admission, and every later downgrade waits a full
+    tau_h after the previous change."""
+    reset(nf.uniform_threat([(0, 1)]))
+    nf.TAU_H = 8
+    net = nf.Network()
+    r = req(1, ingress=2, c=1, deadline=1e6)
+    r.update(node=2, k=3, history=[(0, 1)], last_change=0)
+    net.place(r)
+    log, downs = [], []
+    for t in range(1, 40):
+        before = len(log)
+        nf.adapt(r, t, net, log, nf.POLICIES["RASP-Fog"])
+        downs += [t for x in log[before:] if x[1] == "DOWNGRADE"]
+    assert downs and downs[0] == 8, downs
+    assert all(b - a >= 8 for a, b in zip(downs, downs[1:])), downs
+    nf.TAU_H = 8
+
+
 # ------------------------------------------------------------------ whole runs
 def test_full_runs_never_under_protect_or_break_capacity():
     for policy in ("RASP-Fog", "RASP-Reloc", "RASP-Profile", "SA-FF", "Static-Strong"):
