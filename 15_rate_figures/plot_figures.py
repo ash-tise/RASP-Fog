@@ -31,10 +31,11 @@ def load(name):
         return list(csv.DictReader(f))
 
 
-def series(rows, method, key):
+def series(rows, method, key, nan_as_zero=False):
     rs = sorted((r for r in rows if r["method"] == method), key=lambda r: float(r["rate"]))
-    return ([float(r["rate"]) for r in rs], [float(r[key]) for r in rs],
-            [float(r[key + "_ci"]) for r in rs])
+    fix = (lambda v: 0.0 if v != v else v) if nan_as_zero else (lambda v: v)
+    return ([float(r["rate"]) for r in rs], [fix(float(r[key])) for r in rs],
+            [fix(float(r[key + "_ci"])) for r in rs])
 
 
 # The line passes through every simulated rate; markers and error bars are drawn
@@ -82,10 +83,13 @@ def secure(summary, raw):
     save(fig, "rate_fig_secure")
 
 
-def single(summary, key, ylabel, name, loc, after=None):
+def single(summary, key, ylabel, name, loc, after=None, nan_zero=(), labels=None):
+    """nan_zero: methods whose NaN values are drawn as 0; labels: legend overrides."""
     fig, ax = plt.subplots(figsize=(3.5, 2.5))
+    labels = labels or {}
     for m in METHODS:
-        line(ax, m, *series(summary, m, key))
+        figstyle.line(ax, m, *series(summary, m, key, nan_as_zero=m in nan_zero),
+                      marked=MARKED, label=labels.get(m))
     axes_style(ax, ylabel)
     legend(ax, loc)
     if after:                  # may replace the legend placement
@@ -101,11 +105,19 @@ def changes_labels(ax):
     ax.text(49, 50, "fixed profile", ha="right", fontsize=6.5, color="0.3")
 
 
+def sec_term(summary):
+    # Static-Strong never upgrades, so its termination rate has no denominator
+    # (NaN in the CSVs); it is 0 by construction and drawn as 0.
+    single(summary, "sec_term_pct", "Security-triggered\ntermination (%)", "rate_fig_sec_term",
+           "upper left", nan_zero=("Static-Strong",),
+           labels={"Static-Strong": "Static-Strong\n(0 by construction)"},
+           after=lambda ax: ax.set_ylim(-0.4, 9.2))   # headroom so the legend clears the curves
+
+
 if __name__ == "__main__":
     summary, raw = load("rate_summary.csv"), load("rate_raw.csv")
     secure(summary, raw)
-    single(summary, "sec_term_pct", "Security-triggered\ntermination (%)", "rate_fig_sec_term",
-           "upper left")
+    sec_term(summary)
     single(summary, "mean_delay", "Mean end-to-end delay (ms)", "rate_fig_delay", "lower right")
     single(summary, "changes_per_1000", "Profile changes\nper 1,000 admitted",
            "rate_fig_changes", "lower left", changes_labels)

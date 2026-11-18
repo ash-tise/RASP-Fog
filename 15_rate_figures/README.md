@@ -43,13 +43,13 @@ Saturation starts at **18 req/s**: fog CPU is 83%, and rejection first appears (
 
 ## Caveats for the figures
 
-- Static-Strong is always q3, so its termination and profile-change counts are 0 by construction.
+- Static-Strong is always q3, so its termination and profile-change counts are 0 by construction. It has no mandatory upgrades, so `sec_term_pct` has no denominator and is NaN in the CSVs; `plot_figures.py` draws it as 0, labelled "(0 by construction)".
 - RASP-Profile and RASP-Reloc are identical up to about 14 req/s, because no upgrade needs relocation there.
-- `mean_delay` is the delay of each admitted request at its last placement decision, averaged over admitted requests. It is not time-averaged over the session, and rejected requests are excluded, so it flattens at about 68 ms in overload.
+- `mean_delay` is the delay of each admitted request at its last placement decision, averaged over admitted requests. It is not time-averaged over the session, and rejected requests are excluded, so it flattens at about 74–77 ms in overload.
 - `sec_term_pct` uses admitted requests with at least one mandatory upgrade as the denominator (same as `13_final_figures` Fig. 2).
-- RASP-Fog vs SA-FF is within about 1 point everywhere. SA-FF is slightly ahead on secure completion at 18–22 req/s (−0.15 pts paired), and RASP-Fog is ahead from 28 req/s on (+0.4 to +0.7). RASP-Fog has 0.4–1.5 ms lower delay at every load.
+- RASP-Fog vs SA-FF is within about 1 point everywhere. SA-FF is slightly ahead on secure completion at 18–20 req/s (−0.1 to −0.2 pts paired), and RASP-Fog is ahead from 28 req/s on (+0.3 to +0.95). RASP-Fog has lower delay up to 18 req/s; from 19 req/s on the two are tied (see Step 2).
 
-## Step 2: full run (25 seeds, 2,250 runs, 11 min on 11 cores)
+## Step 2: full run (25 seeds, 2,250 runs, 10 min on 11 cores)
 
 ```bash
 python3 15_rate_figures/run_figures.py    # simulate, write CSVs, draw figures
@@ -60,8 +60,9 @@ Outputs: `rate_raw.csv`, `rate_summary.csv` (mean and 95% CI), `rate_paired.csv`
 
 Results (paired differences are RASP-Fog minus the other method, ± 95% CI):
 
-- **Secure completion:** 100% for every method up to 16 req/s. RASP-Fog beats Static-Strong by 1.0–1.5 pts from 20 req/s on, and RASP-Profile by 0.3–0.7 pts at 17–32 req/s. Against SA-FF it is 0.1–0.2 pts behind at 17–21 req/s and 0.4–0.8 pts ahead from 28 req/s on. RASP-Reloc (no hysteresis) is 0.1–0.5 pts ahead of RASP-Fog from 19 req/s on.
-- **Security-triggered termination:** RASP-Profile (no relocation) climbs to 6–7%, against 2.6–3.5% for the methods that relocate (−3.4 to −4.0 pts paired from 22 req/s on). RASP-Fog, SA-FF and RASP-Reloc are within about 0.3 pts of each other. Static-Strong is 0 by construction.
-- **Mean delay:** RASP-Fog is 0.4–3 ms faster than SA-FF at every rate and 1–4.6 ms faster than Static-Strong. RASP-Profile and RASP-Reloc are 1–2.5 ms faster than RASP-Fog near the knee, because they downgrade without waiting τ_H.
-- **Profile changes:** about 680 per 1,000 for RASP-Fog and SA-FF, against 1,050–1,110 for the τ_H = 0 variants (−37%). Flat in load. Static-Strong is 0.
+- **Secure completion:** 100% for every method up to 16 req/s. RASP-Fog beats Static-Strong by 1.0–1.5 pts from 20 req/s on, and RASP-Profile by 0.2–0.7 pts at 17–32 req/s. Against SA-FF it is 0.1–0.2 pts behind at 18–20 req/s, 0.3 pts ahead at 28 req/s and +0.77 to +0.95 pts ahead from 32 req/s on. RASP-Reloc (no hysteresis) is 0.1–0.4 pts ahead of RASP-Fog from 19 req/s on.
+- **Security-triggered termination:** RASP-Profile (no relocation) climbs to 5–7%, against 1.6–3.7% for the methods that relocate (−3.4 to −4.0 pts paired from 22 req/s on). RASP-Fog, SA-FF and RASP-Reloc are within about 0.4 pts of each other. Static-Strong is undefined (NaN, no mandatory upgrades) and drawn as 0.
+- **Mean delay:** levels off at about 74–77 ms in overload. RASP-Fog is 0.4–4.2 ms faster than SA-FF at 4–18 req/s (paired); from 19 req/s on the two are statistically tied (−0.3 to +0.2 ms, inside the CI). RASP-Fog is 1.5–5.9 ms faster than Static-Strong at every rate. RASP-Profile and RASP-Reloc are 0.9–2.6 ms faster than RASP-Fog near the knee, because they downgrade without waiting τ_H.
+- **Profile changes:** about 670–680 per 1,000 for RASP-Fog and SA-FF, against 1,050–1,110 for the τ_H = 0 variants (−37%). Flat in load. Static-Strong is 0.
+- **Service failure and reconfiguration cost:** `service_failure_pct` is ≤0.1% up to 16 req/s and reaches 0.8% (RASP-Fog, SA-FF), 1.0% (RASP-Reloc) and 1.9–2.1% (RASP-Profile) in overload; Static-Strong is 0. `reconfig_ms_per_req` is 1.35–1.75 ms for RASP-Fog, 1.36–1.83 ms for SA-FF and 2.1–2.65 ms for the τ_H = 0 variants; Static-Strong is 0.
 - No admitted request missed its deadline at any rate (`sla_miss_pct` = 0).
