@@ -2,7 +2,9 @@
 
 A discrete-time simulation of RASP-Fog, a risk- and SLA-aware scheme that jointly selects the processing node and security profile for each IoT request in a fog–cloud network.
 
-Requirements: Python 3. `matplotlib` is needed only to save figures.
+Requirements: Python 3. `matplotlib` and `scienceplots` are needed only to save figures.
+
+Every paper figure (tests 13, 15 and 16) is drawn with `figstyle.py`: square plot areas (3.5 × 3.5 in per plot; two-panel figures are two squares side by side at the IEEE two-column width), a major and a minor grid, Times New Roman at 8 pt, a framed legend inside the axes, and one fixed color, marker and line style per method.
 
 ## Repository layout
 
@@ -38,6 +40,8 @@ Two simulation models sit at the repository root. Each numbered folder holds one
 | `12_protection_testing` | `protection_test.py` | Results with deadline protection on and off |
 | `13_final_figures` | `run_figures.py`, `paper_figures.py` | The three final-report figures (10 seeds), plus print-size redraws |
 | `14_weight_sweep` | `sweep.py`, `rate_check.py` | Does retuning the cost weights λ_D, λ_O and ω help RASP-Fog? |
+| `15_rate_figures` | `run_figures.py`, `plot_figures.py` | Four figures vs arrival rate, 25 seeds, shared traces |
+| `16_placement_baselines` | `run_baselines.py`, `plot_baselines.py` | RASP-Fog vs SA-FF, latency-aware (LA) and load-aware (LB) placement, nominal and constrained fog/cloud capacity |
 | `tests` | `test_rasp_nsfnet.py` | 10 unit tests on hand-built NSFNET scenarios |
 
 ### Shared code
@@ -70,6 +74,8 @@ RATE_FIG2=24 RATE_FIG3=14 python3 13_final_figures/run_figures.py
 python3 13_final_figures/paper_figures.py
 python3 14_weight_sweep/sweep.py
 python3 14_weight_sweep/rate_check.py
+python3 15_rate_figures/make_traces.py && python3 15_rate_figures/run_figures.py
+python3 16_placement_baselines/run_baselines.py      # needs the 15_rate_figures traces
 python3 tests/test_rasp_nsfnet.py
 ```
 
@@ -118,6 +124,10 @@ The final experiments (13, 14) use the method set below. In `rasp_nsfnet.py` eve
 | RASP-Reloc | adaptive | yes | 0 | min J (same as No-Hysteresis) |
 | RASP-Profile | adaptive | no, terminate if the local upgrade fails | 0 | min J |
 | SA-FF | adaptive | yes | 8 s | first feasible node: fewest hops from ingress, then node ID, cloud last |
+| LA | adaptive | yes | 8 s | latency-aware: min end-to-end delay over every feasible (node, profile) |
+| LB | adaptive | yes | 8 s | load-aware: fog node with the lowest projected CPU utilization after placement; cloud only if no fog node fits |
+
+SA-FF, LA and LB use exactly the same security adaptation as RASP-Fog (adaptive profile, local-first upgrade, relocation, τ_H = 8 s); only the node choice at admission and relocation differs. Test 16 also uses three capacity switches in `rasp_nsfnet.py`: `FOG_SCALE` (multiplies fog CPU, memory and interface bandwidth), `CLOUD_CPU` and `CLOUD_MEM` (default: elastic cloud), plus the existing `WAN_BW`.
 | Static-Strong | always q3 | no | – | min J |
 
 ## Summary of results
@@ -137,6 +147,7 @@ The final experiments (13, 14) use the method set below. In `rasp_nsfnet.py` eve
 | Deadline protection | Without it, 11-19 % of sessions are pushed past their deadline near saturation, relocation rarely succeeds, and RASP-Fog's advantage disappears. |
 | Final figures (10 seeds) | Knee near 20 req/s. RASP-Fog beats SA-FF by 0.5-1.2 points and Static-Strong by 2-3 points above the knee; Static-Strong spends 1.7× RASP-Fog's security CPU (40-47 % less for RASP-Fog, fixed θ = 2). Under rising threat, RASP-Profile terminates about 3× as many upgraded sessions as the relocating methods; RASP-Fog vs SA-FF is within noise there. τ_H = 8 s cuts profile changes by 30 %. |
 | Weight sweep | The default λ_D = 0.5 is not the best setting. Tuned weights (λ_D = 0 or 0.25) send about a quarter of requests to the cloud and lift secure completion at 24 req/s from 94.6 % to 100 %, at the cost of up to 8 ms more mean delay, and nearly double delay at light load. |
+| Placement baselines (16) | With the security adaptation held fixed, RASP-Fog is within 1 point of SA-FF, latency-aware (LA) and load-aware (LB) placement on secure completion in both the nominal and the constrained (fog × 0.5, cloud 200 CPU units) scenario; LB ties or slightly beats it under constraint (−0.46 ± 0.25 pts at 24 req/s). LA has 0.5–2.4 ms lower delay; LB 1.4–20 ms higher. |
 
 ## Key findings thus far
 
@@ -149,6 +160,7 @@ Significance is judged with paired 95% t-intervals over five seeds (tests 05-08 
 5. **Deadline protection matters more than any policy difference.** Without it, 11-19 % of sessions are pushed past their deadline near saturation, secure completion falls by 9-22 points for every policy, relocation rarely succeeds, and Static-Strong completes 2.1-2.6 points more than RASP-Fog at 24-32 req/s (test 12). Findings 2 and 3 hold only with protection on.
 6. **Static-Light is cheap but insecure.** It completes only about 7 % of NSFNET sessions securely, since every health session and every session that sees a raised threat is under-protected.
 7. **The cost weights matter more than the placement rule near saturation.** RASP-Fog's lead over SA-FF is under 1.2 points, but lowering λ_D from 0.5 to 0.25 adds 5.4-6.4 points at 24-32 req/s by offloading to the cloud (test 14). The committed default is still λ_D = 0.5, and test 13 uses it.
+8. **The placement objective is not where the gains come from.** Against latency-aware and load-aware placement with the same security adaptation, RASP-Fog's secure-completion gain is under 1 point in both capacity scenarios, and LB matches it or beats it under constrained fog and cloud (test 16). The robust results are findings 1, 3 and 4, which come from the adaptation logic.
 
 The size of findings 1 and 2 depends on the assumed profile overheads (5/10/20 % CPU and memory); heavier overheads would widen the gaps but have not been tested.
 

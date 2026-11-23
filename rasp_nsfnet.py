@@ -24,7 +24,7 @@ Usage:
     nf.THREAT = nf.random_threat(random.Random(1), steps=200, p_up=0.2)  # or uniform_threat
     arrivals = nf.make_arrivals(random.Random(1), rate=20, duration=150)
     m = nf.simulate("RASP-Fog", arrivals, duration=150, warmup=30)
-    # policies: RASP-Fog, RASP-Reloc, RASP-Profile, SA-FF, Static-Strong (see POLICIES)
+    # policies: RASP-Fog, RASP-Reloc, RASP-Profile, SA-FF, LA, LB, Static-Strong (see POLICIES)
     print(m["secure_pct"], m["moves"], m["terminated"], m["sec_cpu_pct"])
 
 Needs only plain Python 3.
@@ -60,6 +60,12 @@ WAN_DELAY_MS = 100              # gateway -> cloud
 WAN_BW = 1000                   # Mbps per gateway uplink
 CLOUD_MU = 200
 
+# Capacity scaling for the constrained-resource scenarios (16_placement_baselines).
+# The defaults keep the original model: full-size fog nodes and an elastic cloud.
+FOG_SCALE = 1.0                 # multiplies every fog node's CPU, memory and interface bandwidth
+CLOUD_CPU = float("inf")        # cloud CPU units (inf = elastic)
+CLOUD_MEM = float("inf")        # cloud memory (MB)
+
 PROTECT = True      # a placement may not push requests already on the node past their deadline
 CHI_MS = 2          # queueing scale: chi = 2 ms at 50% CPU, 18 ms at 90%, 98 ms at 98%
 MAX_UTIL = 0.99     # utilization in the queueing term is capped just below 1
@@ -93,14 +99,20 @@ THREAT = {r: [(0, 1)] for r in REGIONS}     # region -> [(start second, level)]
 #   profile   "adaptive" (q >= q_req, re-evaluated every epoch) or a fixed level k
 #   relocate  whether a mandatory upgrade that does not fit locally may move the request
 #   tau_h     hysteresis holding interval (None = TAU_H)
-#   placement "objective" (min J over every feasible node) or "first_fit" (first node,
+#   placement "objective" (min J over every feasible node), "first_fit" (first node,
 #             in FIRST_FIT_ORDER, with any feasible profile; min J among that node's
-#             profiles). Placement applies at admission and at relocation.
+#             profiles), "latency" (min end-to-end delay d over every feasible
+#             (node, profile)), or "load" (the fog node with the lowest projected CPU
+#             utilization after placement, cloud only if no fog node is feasible; min J
+#             among that node's profiles). Placement applies at admission and at
+#             relocation; in-place upgrades and downgrades are the same for every policy.
 POLICIES = {
     "RASP-Fog":      {"profile": "adaptive", "relocate": True,  "tau_h": None, "placement": "objective"},
     "RASP-Reloc":    {"profile": "adaptive", "relocate": True,  "tau_h": 0,    "placement": "objective"},
     "RASP-Profile":  {"profile": "adaptive", "relocate": False, "tau_h": 0,    "placement": "objective"},
     "SA-FF":         {"profile": "adaptive", "relocate": True,  "tau_h": None, "placement": "first_fit"},
+    "LA":            {"profile": "adaptive", "relocate": True,  "tau_h": None, "placement": "latency"},
+    "LB":            {"profile": "adaptive", "relocate": True,  "tau_h": None, "placement": "load"},
     "Static-Strong": {"profile": 3,          "relocate": False, "tau_h": 0,    "placement": "objective"},
     # older names, kept so tests 9-12 still run
     "No-Hysteresis": {"profile": "adaptive", "relocate": True,  "tau_h": 0,    "placement": "objective"},
@@ -124,7 +136,9 @@ def build_topology():
     nodes = {}
     for j in FOG:
         nodes[j] = dict(LARGE if j % 2 else SMALL)       # odd nodes large, even small
-    nodes[CLOUD] = {"cpu": INF, "mem": INF, "bw": INF, "mu": CLOUD_MU}
+        for key in ("cpu", "mem", "bw"):
+            nodes[j][key] *= FOG_SCALE
+    nodes[CLOUD] = {"cpu": CLOUD_CPU, "mem": CLOUD_MEM, "bw": INF, "mu": CLOUD_MU}
     links = {}
     for a, b, km in NSFNET_LINKS:
         links[(min(a, b), max(a, b))] = {"delay": link_delay(km), "bw": LINK_BW}
@@ -358,7 +372,7 @@ def evaluate(req, node, k, net, prev_node=None, prev_k=None):
     psi = PSI_MOVE if prev_node is not None and node != prev_node else 0
     nu = net.routes[(req["ingress"], node)][0]
     util = 0.0 if node == CLOUD else (used_cpu + need_c) / net.nodes[node]["cpu"]
-    chi, base = processing_ms(req["c"], net.nodes[node]["mu"], util)
+    chi, base = processing_ms(req["c"], net.nodes[node]["mu"], util)   # no queueing in the cloud
     if PROTECT and chi > net.chi_room(node) + 1e-9:    # would push co-located requests late
         return None
     processing = chi + base + p["L"] + rho
@@ -367,7 +381,8 @@ def evaluate(req, node, k, net, prev_node=None, prev_k=None):
     o = (wc * req["c"] * p["dc"] / av_c + wm * req["m"] * p["dm"] / av_m
          + (wb * req["b"] * p["db"] / av_b if av_b > 0 else 0))
     return {"node": node, "k": k, "d": processing + communication,
-            "proc": processing, "comm": communication, "nu": nu, "chi": chi, "o": o}
+            "proc": processing, "comm": communication, "nu": nu, "chi": chi, "o": o,
+            "util": util}            # projected post-placement CPU utilization (0 for the cloud)
 
 
 def current_delay(req, net, chi=None):
@@ -377,6 +392,15 @@ def current_delay(req, net, chi=None):
     q, base = processing_ms(req["c"], net.nodes[node]["mu"], net.utilization(node))
     return (net.routes[(req["ingress"], node)][0] + (q if chi is None else chi)
             + base + PROFILES[req["k"]]["L"])
+
+
+def choose_placement(cands, policy):
+    """Pick among placement candidates: min end-to-end delay for latency-aware
+    placement (ties: weaker profile, then node order), min J otherwise."""
+    if policy.get("placement") == "latency":
+        order = {n: i for i, n in enumerate(FOG + [CLOUD])}
+        return min(cands, key=lambda c: (round(c["d"], 9), c["k"], order[c["node"]]))
+    return choose(cands)
 
 
 def choose(cands):
@@ -403,9 +427,20 @@ def feasible(req, nodes, profiles, net, prev_node=None, prev_k=None):
 
 def place_cands(req, nodes, profiles, net, policy, prev_node=None, prev_k=None):
     """Feasible candidates for a placement decision (admission or relocation).
-    Objective placement returns every feasible (node, k); first-fit returns only
-    the candidates at the first node in the fixed order that has any."""
-    if policy.get("placement", "objective") != "first_fit":
+    Objective and latency placement return every feasible (node, k); first-fit
+    returns only the candidates at the first node in the fixed order that has any;
+    load-aware returns only the candidates at the fog node with the lowest
+    projected CPU utilization (the cloud's candidates if no fog node has any)."""
+    placement = policy.get("placement", "objective")
+    if placement == "load":
+        cands = feasible(req, nodes, profiles, net, prev_node, prev_k)
+        fog = [c for c in cands if c["node"] != CLOUD]
+        if not fog:
+            return cands                                  # cloud only, or nothing
+        order = {n: i for i, n in enumerate(FOG)}
+        best = min(fog, key=lambda c: (round(c["util"], 9), order[c["node"]]))["node"]
+        return [c for c in fog if c["node"] == best]
+    if placement != "first_fit":
         return feasible(req, nodes, profiles, net, prev_node, prev_k)
     allowed = set(nodes)
     for node in net.ff_order[req["ingress"]]:
@@ -427,7 +462,7 @@ def admit(req, t, net, log, policy):
     if not cands:
         log.append((t, "REJECT", req, f"needs q{q_req}, no node fits it on time"))
         return False
-    best = choose(cands)
+    best = choose_placement(cands, policy)
     req.update(node=best["node"], k=best["k"], history=[(t, q_req)], delay=best["d"],
                last_change=t)                    # admission counts as a profile change
     net.place(req)
@@ -470,7 +505,7 @@ def adapt(req, t, net, log, policy):
             log.append((t, "TERMINATE", req, f"needs q{q_req}, no feasible "
                         f"{'node' if policy['relocate'] else 'upgrade in place'}"))
             return
-        best = choose(cands)
+        best = choose_placement(cands, policy) if event == "MOVE" else choose(cands)
         if event == "MOVE":                              # record the relocation's cost
             old, new = net.routes[(req["ingress"], cur_node)], net.routes[(req["ingress"], best["node"])]
             req.setdefault("relocations", []).append(

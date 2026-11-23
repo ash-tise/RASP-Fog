@@ -1,14 +1,16 @@
 """
 plot_figures.py - draw the four arrival-rate figures from the stored results
-(no re-simulation), sized for one IEEE column (3.5 in, 8 pt fonts).
+(no re-simulation), as square plots in the shared style of ../figstyle.py
+(3.5 x 3.5 in per plot, 8 pt fonts, major and minor grid).
 
     python3 15_rate_figures/plot_figures.py [output_dir]
 
 Writes rate_fig_secure, rate_fig_sec_term, rate_fig_delay and rate_fig_changes
 (.pdf and .png) in the shared style of ../figstyle.py. Error bars are 95%
-t-intervals over the seeds. The secure-
-completion figure has a second panel with each adaptive method's paired gain
-over Static-Strong, because the absolute curves sit within ~1.5 points.
+t-intervals over the seeds. The secure-completion figure has a second square
+panel, side by side with the first (two-column width), with each adaptive
+method's paired gain over Static-Strong, because the absolute curves sit within
+~1.5 points.
 """
 import csv
 import os
@@ -21,7 +23,7 @@ import figstyle  # noqa: E402
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = sys.argv[1] if len(sys.argv) > 1 else HERE
 
-METHODS = list(STYLE)
+METHODS = ["RASP-Fog", "SA-FF", "RASP-Profile", "RASP-Reloc", "Static-Strong"]
 XLABEL = "Arrival rate (requests/s)"
 KNEE = 18                      # saturation onset from the pilot (README)
 
@@ -60,11 +62,10 @@ def save(fig, name):
 
 
 def secure(summary, raw):
-    fig, (a, b) = plt.subplots(2, 1, figsize=(3.5, 4.2), sharex=True,
-                               gridspec_kw={"height_ratios": [1.3, 1]})
+    fig, (a, b) = figstyle.figure(2)
     for m in METHODS:
         line(a, m, *series(summary, m, "secure_pct"))
-    axes_style(a, "Secure completion (%)", xlabel=False)
+    axes_style(a, "Secure completion (%)")
     a.set_title("(a)", pad=2)
     # (b) paired gain over Static-Strong, per seed
     by = {(r["method"], int(r["rate"]), int(r["seed"])): float(r["secure_pct"]) for r in raw}
@@ -85,7 +86,7 @@ def secure(summary, raw):
 
 def single(summary, key, ylabel, name, loc, after=None, nan_zero=(), labels=None):
     """nan_zero: methods whose NaN values are drawn as 0; labels: legend overrides."""
-    fig, ax = plt.subplots(figsize=(3.5, 2.5))
+    fig, ax = figstyle.figure()
     labels = labels or {}
     for m in METHODS:
         figstyle.line(ax, m, *series(summary, m, key, nan_as_zero=m in nan_zero),

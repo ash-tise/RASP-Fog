@@ -179,9 +179,60 @@ def test_downgrade_window_starts_at_last_change():
     nf.TAU_H = 8
 
 
+# ------------------------------------------------------------------ LA / LB baselines
+def test_latency_aware_picks_min_delay():
+    reset()
+    net = nf.Network()
+    r = req(1, ingress=5, kind="sensor", c=1)
+    log = []
+    assert nf.admit(r, 0, net, log, nf.POLICIES["LA"])
+    cands = nf.feasible(r, list(net.nodes), [1, 2, 3], net)
+    assert abs(r["delay"] - min(c["d"] for c in cands)) < 1e-9
+    assert r["node"] == 5 and r["k"] == 1               # ingress, weakest profile
+
+
+def test_load_aware_picks_least_utilized_fog_node():
+    reset()
+    net = nf.Network()
+    # load every fog node except node 12 a little, so 12 has the lowest utilization
+    for j in nf.FOG:
+        if j != 12:
+            f = req(100 + j, ingress=j, kind="sensor", c=20, deadline=1e6)
+            f.update(node=j, k=1, history=[(0, 1)])
+            net.place(f)
+    r = req(1, ingress=1, kind="sensor", c=1, deadline=1e6)
+    assert nf.admit(r, 0, net, [], nf.POLICIES["LB"])
+    assert r["node"] == 12
+
+
+def test_load_aware_uses_cloud_only_when_fog_is_infeasible():
+    reset()
+    net = nf.Network()
+    # with fog room the cloud is never picked; offered only the cloud, LB falls back to it
+    r = req(1, ingress=6, kind="sensor", c=1, deadline=1e6)
+    assert nf.admit(r, 0, net, [], nf.POLICIES["LB"])
+    assert r["node"] != nf.CLOUD
+    cands = nf.place_cands(r, [nf.CLOUD], [1], net, nf.POLICIES["LB"])
+    assert [c["node"] for c in cands] == [nf.CLOUD]
+
+
+def test_capacity_scaling():
+    nf.FOG_SCALE, nf.CLOUD_CPU = 0.5, 300
+    try:
+        net = nf.Network()
+        assert net.nodes[1]["cpu"] == nf.LARGE["cpu"] * 0.5
+        assert net.nodes[2]["bw"] == nf.SMALL["bw"] * 0.5
+        assert net.nodes[1]["mu"] == nf.LARGE["mu"]      # speed per request unchanged
+        assert net.nodes[nf.CLOUD]["cpu"] == 300
+        big = req(1, ingress=6, kind="sensor", c=400, deadline=1e6)
+        assert nf.evaluate(big, nf.CLOUD, 1, net) is None
+    finally:
+        nf.FOG_SCALE, nf.CLOUD_CPU = 1.0, float("inf")
+
+
 # ------------------------------------------------------------------ whole runs
 def test_full_runs_never_under_protect_or_break_capacity():
-    for policy in ("RASP-Fog", "RASP-Reloc", "RASP-Profile", "SA-FF", "Static-Strong"):
+    for policy in ("RASP-Fog", "RASP-Reloc", "RASP-Profile", "SA-FF", "LA", "LB", "Static-Strong"):
         nf.PROTECT = True
         nf.TAU_H = 8
         nf.THREAT = nf.random_threat(random.Random(7), 200, p_up=0.4)
@@ -193,6 +244,19 @@ def test_full_runs_never_under_protect_or_break_capacity():
         assert m["sla_miss"] == 0, policy               # PROTECT keeps incumbents on time
         # a terminated or under-protected request is never a secure completion
         assert m["secure"] + m["terminated"] + m["rejected"] <= m["arrivals"]
+
+
+def test_constrained_runs_respect_capacity():
+    nf.FOG_SCALE, nf.CLOUD_CPU, nf.WAN_BW = 0.5, 100, 250
+    try:
+        for policy in ("RASP-Fog", "SA-FF", "LA", "LB"):
+            nf.PROTECT, nf.TAU_H = True, 8
+            nf.THREAT = nf.random_threat(random.Random(7), 200, p_up=0.4)
+            arr = nf.make_arrivals(random.Random(3), 30, 60)
+            m = nf.simulate(policy, arr, 60, warmup=10, check=True)
+            assert m["problems"] == [] and m["late"] == 0 and m["under"] == 0, policy
+    finally:
+        nf.FOG_SCALE, nf.CLOUD_CPU, nf.WAN_BW = 1.0, float("inf"), 1000
 
 
 if __name__ == "__main__":

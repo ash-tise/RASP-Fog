@@ -56,7 +56,7 @@ python3 15_rate_figures/run_figures.py    # simulate, write CSVs, draw figures
 python3 15_rate_figures/plot_figures.py   # redraw only, from rate_summary.csv
 ```
 
-Outputs: `rate_raw.csv`, `rate_summary.csv` (mean and 95% CI), `rate_paired.csv` (RASP-Fog minus each method, paired by seed), and `rate_fig_secure`, `rate_fig_sec_term`, `rate_fig_delay`, `rate_fig_changes` (.pdf/.png, one IEEE column, 3.5 in). Times New Roman, legends inside the axes, shaded 95% CI bands. The secure-completion figure adds panel (b), each adaptive method's paired gain over Static-Strong.
+Outputs: `rate_raw.csv`, `rate_summary.csv` (mean and 95% CI), `rate_paired.csv` (RASP-Fog minus each method, paired by seed), and `rate_fig_secure`, `rate_fig_sec_term`, `rate_fig_delay`, `rate_fig_changes` (.pdf/.png) in the shared `../figstyle.py` style: square 3.5 × 3.5 in plots, major and minor grid, Times New Roman, framed legends inside the axes, 95% CI error bars. The secure-completion figure adds panel (b), each adaptive method's paired gain over Static-Strong, as a second square beside (a) (two-column width).
 
 Results (paired differences are RASP-Fog minus the other method, ± 95% CI):
 
